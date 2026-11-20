@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  release-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: bash scripts/tests/release.sh
+
+  test:
+    name: Keycloak ${{ matrix.keycloak }} / server JDK ${{ matrix.server_java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - keycloak: '15.0.2'
+            server_java: '11'
+            profile: ''
+          - keycloak: '20.0.5'
+            server_java: '17'
+            profile: 'keycloak20'
+          - keycloak: '21.1.2'
+            server_java: '17'
+            profile: 'keycloak21'
+          - keycloak: '22.0.5'
+            server_java: '17'
+            profile: 'keycloak22'
+          - keycloak: '23.0.7'
+            server_java: '17'
+            profile: 'keycloak23'
+          - keycloak: '24.0.5'
+            server_java: '17'
+            profile: 'keycloak24'
+          - keycloak: '25.0.6'
+            server_java: '21'
+            profile: 'keycloak25'
+          - keycloak: '26.8.2'
+            server_java: '25'
+            profile: 'keycloak26'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Preserve the legacy compiler and unit-test JDK
+        run: echo "JAVA11_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.server_java }}
+      - name: Preserve the selected server JDK
+        run: echo "KEYCLOAK_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Verify the selected runtime and automatic H2 reset
+        env:
+          MAVEN_PROFILE: ${{ matrix.profile }}
+          EXPECTED_KEYCLOAK: ${{ matrix.keycloak }}
+          EXPECTED_SERVER_JAVA: ${{ matrix.server_java }}
+        shell: bash
+        run: |
+          args=(-B verify "-Dtested.keycloak.version=$EXPECTED_KEYCLOAK" "-Dtested.server.java=$EXPECTED_SERVER_JAVA")
+          if [[ -n "$MAVEN_PROFILE" ]]; then
+            args+=("-P$MAVEN_PROFILE")
+          fi
+          mvn "${args[@]}"

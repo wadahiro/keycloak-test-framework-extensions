@@ -1,0 +1,17 @@
+# IDE test execution
+
+Both IntelliJ IDEA and Eclipse can run integration tests through their ordinary JUnit launchers.
+Keep the extension in project test scope and configure one matching runtime artifact under `keycloak-test-runtime-maven-plugin` dependencies.
+Run `process-test-classes` before direct JUnit launches to generate the descriptor; runtime libraries stay outside the test classpath.
+
+Configure the IDE's JUnit process to use JDK 25.
+Set `KEYCLOAK_JAVA_HOME` in the JUnit launch environment to the server JDK: 11 for Keycloak 15.0.2, 17 for 20–24, 21 for 25, or 25 for 26.
+Configure exactly one runtime artifact per integration-test module. The optional `kc.test.undertow.version` test property must match that artifact.
+The `kc.test.server` and `kc.test.keycloak` selections belong in `src/test/resources/keycloak-test.properties` as usual.
+
+Keep legacy Java 11 unit tests in their existing module and run configuration.
+Do not add the modern Keycloak Test Framework or the extension to that module's test dependencies.
+Use an IDE Maven launch with `verify` when Maven Failsafe lifecycle behavior is needed; direct JUnit runs do not invoke Maven lifecycle phases.
+See [runtime plugin setup](../../../docs/runtime-plugin.md) for a consumer POM example.
+
+Detailed launch setup and troubleshooting are in [the repository IDE guide](../../../docs/ide-testing.md).

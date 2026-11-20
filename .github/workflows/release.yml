@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      MAVEN_ARGS: >-
+        ${{ format('-Ppublishing,all-runtimes -DaltDeploymentRepository=mvn-repo::file://{0}/_mvn-repo', github.workspace) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          # The Maven repository worktree shares this checkout's token-scoped git config.
+          persist-credentials: true
+      - run: bash scripts/check-release-baseline.sh
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Preserve the server and unit-test JDK
+        run: echo "KEYCLOAK_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Prepare the Maven repository branch
+        run: bash scripts/prepare-maven-repo.sh
+      - name: Release Maven artifacts and create the GitHub release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 24
+          extra_plugins: |
+            @semantic-release/changelog@6
+            @semantic-release/git@10
+            @terrestris/maven-semantic-release@2
+            conventional-changelog-conventionalcommits@8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push newly deployed Maven artifacts
+        if: steps.semantic.outputs.new_release_published == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.semantic.outputs.new_release_version }}
+        run: bash scripts/push-maven-repo.sh

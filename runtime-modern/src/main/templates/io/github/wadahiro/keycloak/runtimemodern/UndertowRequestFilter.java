@@ -33,6 +33,7 @@ public final class UndertowRequestFilter implements Filter {
             catch (NoSuchMethodException ignored) { }
             catch (ReflectiveOperationException failure) { throw new ServletException(failure); }
             chain.doFilter(request,response);
+            ResteasyContext.pushContext(KeycloakSession.class, session);
             if (tx.isActive()) { if (tx.getRollbackOnly()) tx.rollback(); else tx.commit(); }
         } catch (IOException | ServletException | RuntimeException | Error failure) {
             if (tx.isActive()) tx.rollback(); throw failure;

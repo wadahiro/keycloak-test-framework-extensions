@@ -29,9 +29,13 @@ Do not describe this as same-JVM embedded execution.
 2. Read [references/extension-api.md](references/extension-api.md) for dependencies, per-version runtime artifacts, service-discovery aliases, and configuration.
 3. Read [references/h2-snapshot.md](references/h2-snapshot.md) for automatic H2 snapshot reset.
 4. Read [references/ide-testing.md](references/ide-testing.md) when configuring IntelliJ IDEA or Eclipse JUnit launches.
+5. Read [the broker test design](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
 
-Prefer a separate integration-test module with Failsafe `*IT` tests.
-Add the extension as a test dependency and configure the selected runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`; do not add server dependencies to the test classpath or the modern Framework/JUnit stack to the Java 11 unit-test classpath.
+Use separate Maven modules for Keycloak SPI development and Framework-based integration tests.
+The SPI module compiles against the target Keycloak API and its supported JDK; the integration-test module consumes the built SPI artifact and contains the modern Framework/JUnit tests.
+This boundary matters because the Framework dependency graph can include newer Keycloak model and server artifacts on the integration-test classpath. Test scope keeps them off the SPI module's main compile classpath, but it does not prevent conflicts if legacy SPI source or tests that compile against old server APIs share the integration-test module.
+Prefer Failsafe `*IT` tests in the integration-test module.
+Add the extension as a test dependency and configure the selected runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`; do not add server dependencies to the test classpath or the modern Framework/JUnit stack to the Java 11 unit-test module.
 Keep the server GLOBAL.
 Use CLASS/GLOBAL fixture resources and `@InjectH2Snapshot` for automatic reset.
 Use a disposable server and test realms rather than attaching to an operational realm.

@@ -45,6 +45,7 @@ public final class UndertowProcessServer implements KeycloakServer {
             }
             String executable = System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java";
             ProcessBuilder command = new ProcessBuilder(javaHome.resolve("bin").resolve(executable).toString(),
+                    "-Djava.util.logging.manager=org.jboss.logmanager.LogManager",
                     "--add-opens=java.base/java.util=ALL-UNNAMED",
                     "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
                     "-cp", runtime.classpath(), runtime.mainClass(), run.toString());

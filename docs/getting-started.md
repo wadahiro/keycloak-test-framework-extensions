@@ -36,13 +36,42 @@ Add the extension as a test dependency and configure the runtime adapter under t
     <version>0.1.0</version>
     <scope>test</scope>
 </dependency>
+```
+
+The extension brings in the Keycloak Test Framework core. For OIDC browser-flow tests, add its OAuth module as well:
+
+```xml
 <dependency>
-    <groupId>org.keycloak</groupId>
-    <artifactId>keycloak-test-framework-junit5</artifactId>
+    <groupId>org.keycloak.testframework</groupId>
+    <artifactId>keycloak-test-framework-oauth</artifactId>
     <version>26.8.2</version>
     <scope>test</scope>
 </dependency>
 ```
+
+The Framework's OAuth module provides `@InjectOAuthClient`. For SAML browser-flow tests, add this repository's SAML helper as a test dependency:
+
+```xml
+<dependency>
+    <groupId>io.github.wadahiro</groupId>
+    <artifactId>keycloak-test-framework-saml</artifactId>
+    <version>0.1.0</version>
+    <scope>test</scope>
+</dependency>
+```
+
+For tests where Keycloak brokers authentication to an external OIDC or SAML provider, add the broker test IdP fixtures:
+
+```xml
+<dependency>
+    <groupId>io.github.wadahiro</groupId>
+    <artifactId>keycloak-test-framework-broker</artifactId>
+    <version>0.1.0</version>
+    <scope>test</scope>
+</dependency>
+```
+
+See [OIDC and SAML login examples](client-login-examples.md) and [broker authentication test design](broker-testing-design.md) for browser-flow examples and IdP fixtures. Keep integration tests in a separate Maven module from applications or SPI providers compiled against older Keycloak APIs. Test-scoped Framework dependencies do not affect the main source compile classpath, but they are present on the integration test compile and runtime classpaths and can conflict with old Keycloak types if test sources compile the SPI implementation in the same module.
 
 In the build's `<plugins>` section, add:
 

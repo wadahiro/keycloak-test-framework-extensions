@@ -45,9 +45,9 @@ public final class EmbeddedRuntime {
             var info = server.undertowDeployment(deployment, "").setClassLoader(getClass().getClassLoader())
                     .setContextPath("/auth").setDeploymentName("Keycloak").setDefaultEncoding("UTF-8")
                     .setDefaultServletConfig(new DefaultServletConfig(true));
-            info.addFilter(Servlets.filter("SnapshotBarrier", QuiescentFilter.class));
+            info.addFilter(Servlets.filter("SnapshotBarrier", QuiescentFilter.class).setAsyncSupported(true));
             info.addFilterUrlMapping("SnapshotBarrier", "/*", DispatcherType.REQUEST);
-            info.addFilter(Servlets.filter("SessionFilter", UndertowRequestFilter.class));
+            info.addFilter(Servlets.filter("SessionFilter", UndertowRequestFilter.class).setAsyncSupported(true));
             info.addFilterUrlMapping("SessionFilter", "/*", DispatcherType.REQUEST);
             server.deploy(info);
             KeycloakSession session=KeycloakApplication.getSessionFactory().create();
@@ -61,7 +61,7 @@ public final class EmbeddedRuntime {
                 tx.commit();
             } catch (Exception | Error failure) { if (tx.isActive()) tx.rollback(); throw failure; }
             finally { SessionContext.set(previous); session.close(); }
-            return "http://127.0.0.1:"+port+"/auth";
+            return "http://localhost:"+port+"/auth";
         } catch (Throwable failure) { try { stop(); } catch (Throwable cleanup) { failure.addSuppressed(cleanup); } throw failure; }
     }
     public Object sessionFactory() { return KeycloakApplication.getSessionFactory(); }

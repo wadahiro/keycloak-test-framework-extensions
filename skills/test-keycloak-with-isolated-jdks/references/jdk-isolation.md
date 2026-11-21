@@ -2,9 +2,12 @@
 
 ## Recommended layout
 
-- Application/provider module: preserve its Java 11 source target and unit-test runtime.
+- SPI/provider module: compile against the intended Keycloak SPI version and preserve its supported Java target and unit-test runtime.
 - Extension artifacts: modern Java test tooling, included only as test dependencies by consumers.
-- Integration-test module: modern Framework and JUnit, Failsafe tests on JDK 25; starts Keycloak on its required server JDK.
+- Integration-test module: modern Framework and JUnit, Failsafe tests on JDK 25; consumes the built SPI/provider artifact and starts Keycloak on its required server JDK.
+
+Keep the SPI implementation sources out of the Framework integration-test module. Framework dependencies can bring newer Keycloak classes onto that module's test compile classpath; this can cause IDE or Maven conflicts when tests in the same module compile directly against older server APIs. A plain JUnit test is affected by the same classpath if it imports those old APIs, even when it does not use Framework annotations.
+If a legacy provider has tests that require its old Keycloak APIs, keep those tests in the SPI module and run them with its original dependency set. Use the integration-test module to test the packaged provider through Keycloak's public authentication flows.
 
 The Maven launcher JVM, compiler JVM, test JVM, and Keycloak JVM can be different.
 `maven.compiler.release=11` selects language/API/bytecode compatibility; it does not change the JVM running unit tests.

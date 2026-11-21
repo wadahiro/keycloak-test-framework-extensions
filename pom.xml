@@ -16,6 +16,8 @@
     <modules>
         <module>runtime-undertow15</module>
         <module>extension-undertow</module>
+        <module>extension-saml</module>
+        <module>extension-broker</module>
         <module>examples/java11-unit-tests</module>
         <module>runtime-classpath-maven-plugin</module>
         <module>undertow-integration-tests</module>

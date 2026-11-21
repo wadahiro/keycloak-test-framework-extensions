@@ -24,7 +24,7 @@ Import the Framework BOM in that consumer module to align its transitive depende
 </dependencyManagement>
 <dependencies>
     <dependency>
-        <groupId>io.github.wadahiro</groupId>
+        <groupId>io.github.wadahiro.keycloak.testframework</groupId>
         <artifactId>keycloak-test-framework-undertow</artifactId>
         <version>0.1.0-SNAPSHOT</version>
         <scope>test</scope>
@@ -73,7 +73,7 @@ public class ExampleIT {
 }
 ```
 
-The custom annotation and handle are in `io.github.wadahiro.keycloak.undertow`.
+The custom annotation and handle are in `io.github.wadahiro.keycloak.testframework.undertow`.
 Other types are the standard Framework/JUnit types; no extra JUnit extension registration is needed.
 
 ## Lifecycle and explicit operations

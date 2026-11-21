@@ -1,6 +1,6 @@
 # H2 snapshot reset
 
-Use `io.github.wadahiro:keycloak-test-framework-undertow:0.1.0-SNAPSHOT` with test scope in the modern integration-test module.
+Use `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-undertow:0.1.0-SNAPSHOT` with test scope in the modern integration-test module.
 Import `org.keycloak.testframework:keycloak-test-framework-bom:26.8.2` in the consumer dependency management.
 Source/local-install artifacts are not published releases until the maintainer publishes them.
 
@@ -9,7 +9,7 @@ For Keycloak 20–26, add the matching `keycloak-test-runtime-undertow<major>` t
 Set `KEYCLOAK_JAVA_HOME` or `kc.test.undertow.java.home` to the server JDK required by that version, preserving the JDK 25 runner and the existing unit-test JVM.
 The extension starts the selected runtime in a separate JVM.
 
-Inject `@InjectH2Snapshot H2Snapshot snapshot` (both types in `io.github.wadahiro.keycloak.undertow`).
+Inject `@InjectH2Snapshot H2Snapshot snapshot` (both types in `io.github.wadahiro.keycloak.testframework.undertow`).
 Keep fixture resources CLASS/GLOBAL; METHOD resources and JUnit parallel execution are rejected.
 A baseline is automatically captured after declarative resources exist and restored by Framework cleanup after user `@AfterEach`, before the next `@BeforeEach`.
 For imperative setup, call `snapshot.capture()` at the end of a public `@TestSetup` method on a public test class.

@@ -10,7 +10,7 @@ Add this artifact to the integration-test module, alongside `keycloak-test-frame
 
 ```xml
 <dependency>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-ldap</artifactId>
     <version>0.1.0</version>
     <scope>test</scope>

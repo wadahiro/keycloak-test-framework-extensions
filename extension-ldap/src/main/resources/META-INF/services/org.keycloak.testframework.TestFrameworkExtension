@@ -1,1 +1,1 @@
-io.github.wadahiro.keycloak.ldap.LdapTestFrameworkExtension
+io.github.wadahiro.keycloak.testframework.ldap.LdapTestFrameworkExtension

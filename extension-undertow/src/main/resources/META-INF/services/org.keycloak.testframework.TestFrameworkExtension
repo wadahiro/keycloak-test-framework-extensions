@@ -1,1 +1,1 @@
-io.github.wadahiro.keycloak.undertow.UndertowExtension
+io.github.wadahiro.keycloak.testframework.undertow.UndertowExtension

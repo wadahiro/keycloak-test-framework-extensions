@@ -1,1 +1,1 @@
-io.github.wadahiro.keycloak.saml.SamlTestFrameworkExtension
+io.github.wadahiro.keycloak.testframework.saml.SamlTestFrameworkExtension

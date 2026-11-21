@@ -1,1 +1,1 @@
-io.github.wadahiro.keycloak.broker.BrokerTestFrameworkExtension
+io.github.wadahiro.keycloak.testframework.broker.BrokerTestFrameworkExtension

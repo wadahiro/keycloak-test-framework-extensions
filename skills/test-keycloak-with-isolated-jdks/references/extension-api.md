@@ -6,7 +6,7 @@ Install locally until the maintainer publishes artifacts:
 mvn -pl runtime-classpath-maven-plugin,extension-undertow,runtime-undertow15 -am install -DskipTests
 ```
 
-Add `io.github.wadahiro:keycloak-test-framework-undertow:0.1.0-SNAPSHOT` to a separate integration-test module with test scope.
+Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-undertow:0.1.0-SNAPSHOT` to a separate integration-test module with test scope.
 Configure the matching `keycloak-test-runtime-undertow<major>` artifact as a dependency of `keycloak-test-runtime-maven-plugin`, including for 15.0.2. Do not add this artifact as a project dependency; keeping it in the Maven plugin realm prevents Keycloak classes from leaking into the test JVM.
 Import `org.keycloak.testframework:keycloak-test-framework-bom:26.8.2` in the consumer dependency management.
 The extension uses standard service discovery without Framework source changes.
@@ -30,6 +30,6 @@ The runtime Maven plugin generates the child JVM classpath descriptor in `target
 
 Use the [runtime plugin guide](../../../docs/runtime-plugin.md) for the runtime adapter setup and the [H2 snapshot guide](h2-snapshot.md) for annotations, fixture setup and reset boundaries.
 
-For LDAP User Federation tests, add `io.github.wadahiro:keycloak-test-framework-ldap` with test scope.
+For LDAP User Federation tests, add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-ldap` with test scope.
 It starts an UnboundID in-memory LDAP server in the test JVM and coordinates directory snapshot capture and restore with `H2Snapshot`.
 Read [the LDAP testing guide](../../../docs/ldap-testing.md) for LDAP component configuration and supported limitations.

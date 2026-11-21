@@ -31,7 +31,7 @@ Add the extension as a test dependency and configure the runtime adapter under t
 
 ```xml
 <dependency>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-undertow</artifactId>
     <version>0.1.0</version>
     <scope>test</scope>
@@ -42,7 +42,7 @@ For LDAP User Federation and LDAP mapper tests, add the in-memory directory help
 
 ```xml
 <dependency>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-ldap</artifactId>
     <version>0.1.0</version>
     <scope>test</scope>
@@ -67,7 +67,7 @@ The Framework's OAuth module provides `@InjectOAuthClient`. For SAML browser-flo
 
 ```xml
 <dependency>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-saml</artifactId>
     <version>0.1.0</version>
     <scope>test</scope>
@@ -78,7 +78,7 @@ For tests where Keycloak brokers authentication to an external OIDC or SAML prov
 
 ```xml
 <dependency>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-broker</artifactId>
     <version>0.1.0</version>
     <scope>test</scope>
@@ -91,7 +91,7 @@ In the build's `<plugins>` section, add:
 
 ```xml
 <plugin>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-runtime-maven-plugin</artifactId>
     <version>0.1.0</version>
     <executions>
@@ -103,7 +103,7 @@ In the build's `<plugins>` section, add:
     </executions>
     <dependencies>
         <dependency>
-            <groupId>io.github.wadahiro</groupId>
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
             <artifactId>keycloak-test-runtime-undertow26</artifactId>
             <version>0.1.0</version>
         </dependency>

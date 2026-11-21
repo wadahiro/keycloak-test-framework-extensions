@@ -48,7 +48,7 @@ Add `org.keycloak.testframework:keycloak-test-framework-oauth:26.8.2` as a test 
 
 ## SAML
 
-Add `io.github.wadahiro:keycloak-test-framework-saml:0.1.0` as a test dependency. `@InjectSamlClient` creates a temporary SAML client, reads the realm's IdP metadata, generates a Redirect-binding AuthnRequest, runs the browser login, receives the POST-binding response on a local dynamic-port ACS, and validates the response signature and protocol fields before exposing the result.
+Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-saml:0.1.0` as a test dependency. `@InjectSamlClient` creates a temporary SAML client, reads the realm's IdP metadata, generates a Redirect-binding AuthnRequest, runs the browser login, receives the POST-binding response on a local dynamic-port ACS, and validates the response signature and protocol fields before exposing the result.
 
 ```java
 @KeycloakIntegrationTest

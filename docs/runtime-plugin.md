@@ -9,7 +9,7 @@ Add the extension to the integration-test module's test dependencies and configu
 
 ```xml
 <plugin>
-    <groupId>io.github.wadahiro</groupId>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-runtime-maven-plugin</artifactId>
     <version>0.1.0</version>
     <executions>
@@ -23,7 +23,7 @@ Add the extension to the integration-test module's test dependencies and configu
     </executions>
     <dependencies>
         <dependency>
-            <groupId>io.github.wadahiro</groupId>
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
             <artifactId>keycloak-test-runtime-undertow26</artifactId>
             <version>0.1.0</version>
         </dependency>

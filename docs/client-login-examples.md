@@ -105,3 +105,42 @@ The default SAML client requires Keycloak to sign its response and assertion and
 This helper validates the assertion before returning identity data, but it does not implement an application's session, authorization policy, or full production SP behavior. For application acceptance tests, run the application/SP stack and assert its own authenticated session and authorization decisions.
 
 For broker tests where Keycloak redirects to an external OIDC or SAML IdP, see [broker authentication test design](broker-testing-design.md). That design covers deterministic IdP fixtures, first/post broker flows, mappers, and federated identity link assertions.
+
+## Broker mapper and flow checks
+
+Use the protocol-specific fixture only for the external IdP response.
+Configure the IdP, mapper, and broker flow with Keycloak's Admin API, then start the normal app-facing OIDC or SAML login.
+
+```java
+IdentityProviderMapperRepresentation mapper = new IdentityProviderMapperRepresentation();
+mapper.setName("department-claim-to-user-attribute");
+mapper.setIdentityProviderMapper("oidc-user-attribute-idp-mapper");
+mapper.setConfig(Map.of(
+        "syncMode", "IMPORT",
+        "claim", "department",
+        "user.attribute", "firstName"));
+realm.admin().identityProviders().get("partner").addMapper(mapper).close();
+
+idp.nextLogin(OidcIdentity.subject("directory-42")
+        .claim("preferred_username", "alice")
+        .claim("department", "engineering"));
+
+oauth.openLoginForm();
+loginPage.clickSocial("partner");
+// Drive any profile review, custom authenticator, consent, or required-action pages here.
+var authorization = oauth.parseLoginResponse();
+assertTrue(authorization.isRedirected());
+
+var user = realm.admin().users().search("alice").get(0);
+assertEquals("engineering", user.getFirstName());
+assertEquals("directory-42", BrokerIdentityLinks.forRealm(realm)
+        .findByUsername("alice").identityProvider("partner").orElseThrow().externalUserId());
+```
+
+For a custom first broker login flow, copy the realm's default flow with `realm.admin().flows().copy(...)`, give it a test-specific alias, and pass that alias to `IdentityProviderBuilder.firstBrokerLoginFlowAlias(...)`.
+For a post broker login check, set `postBrokerLoginFlowAlias(...)` and use an already-linked local user so the test exercises the returning-user path.
+The OIDC integration example maps the external `department` claim to the built-in `firstName` property and completes the resulting `VERIFY_PROFILE` required action before checking the final user.
+See `OidcPostBrokerFlowIT` for a complete example that submits credentials on the additional authenticator screen before validating the client response.
+
+The integration examples use a local OIDC or SAML IdP fixture and a real browser.
+The browser remains in the Keycloak flow while the fixture answers the external IdP request, so it can exercise both broker configuration and intermediate Keycloak UI steps.

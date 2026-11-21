@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <plugins>
+    <plugin>
+      <name>Keycloak Test Runtime Maven Plugin</name>
+      <prefix>keycloak-test-runtime</prefix>
+      <artifactId>keycloak-test-runtime-maven-plugin</artifactId>
+    </plugin>
+  </plugins>
+</metadata>

@@ -1,4 +1,4 @@
-# Broker authentication test design
+# Broker authentication testing
 
 The `extension-broker` module provides OIDC and SAML test IdPs and a broker-link query API.
 The integration tests exercise browser-mediated login through both protocols.
@@ -30,10 +30,10 @@ The test IdP is separate from the app-facing test client:
 | Role | OIDC | SAML |
 | --- | --- | --- |
 | Start login to Keycloak under test | Framework `OAuthClient` | Extension `SamlClient` |
-| Simulate the external IdP | New `OidcTestIdentityProvider` | New `SamlTestIdentityProvider` |
+| Simulate the external IdP | `OidcTestIdentityProvider` | `SamlTestIdentityProvider` |
 | Complete and inspect the app-facing response | Framework OIDC token/user-info helpers | Extension's validated SAML ACS result |
 
-The current Framework `OAuthIdentityProvider` helper serves OIDC discovery metadata and JWKS, which is useful for token-verification tests but does not implement a complete interactive authorization-code broker flow. The proposed test IdP provides authorization, token, signing-key, and user-info endpoints for deterministic broker login.
+The Framework `OAuthIdentityProvider` helper serves OIDC discovery metadata and JWKS, which is useful for token-verification tests but does not implement a complete interactive authorization-code broker flow. The extension's OIDC test IdP provides authorization, token, signing-key, and user-info endpoints for deterministic broker login.
 
 ## Test IdP API
 
@@ -52,9 +52,9 @@ Both fixtures expose their endpoints, a Keycloak broker configuration map, and a
 These IdP fixtures and broker-link queries are packaged in the separate `keycloak-test-framework-broker` artifact.
 The app-facing SAML client stays in `keycloak-test-framework-saml`; tests using SAML on both sides can depend on both artifacts.
 
-Before starting a login, the test selects the next external identity, for example `oidcIdp.nextLogin(OidcIdentity.subject("directory-42").claim("email", "alice@example.test"))`. The OIDC fixture serves discovery, JWKS, authorization, token, and user-info endpoints. It validates the redirect URI and returns the authorization state, then issues a single-use code and a signed ID token containing the expected issuer, audience, and nonce. The SAML fixture serves metadata and an SSO endpoint, accepts Redirect and POST AuthnRequest bindings, and returns a signed POST response with matching `InResponseTo`, destination, recipient, audience, and RelayState. Both fixtures complete the browser redirect automatically. This keeps the test focused on Keycloak's broker configuration. Optional IdP UI simulation is outside the first API; use a second Keycloak when the external provider's own login UI or implementation must be tested.
+Before starting a login, the test selects the next external identity, for example `oidcIdp.nextLogin(OidcIdentity.subject("directory-42").claim("email", "alice@example.test"))`. The OIDC fixture serves discovery, JWKS, authorization, token, and user-info endpoints. It validates the redirect URI and returns the authorization state, then issues a single-use code and a signed ID token containing the expected issuer, audience, and nonce. The SAML fixture serves metadata and an SSO endpoint, accepts Redirect and POST AuthnRequest bindings, and returns a signed POST response with matching `InResponseTo`, destination, recipient, audience, and RelayState. Both fixtures complete the browser redirect automatically. This keeps the test focused on Keycloak's broker configuration. The fixtures do not provide an IdP login UI; use a second Keycloak when the external provider's own login UI or implementation must be tested.
 
-Tests create/configure the identity provider in the managed realm using the Framework's `IdentityProviderBuilder` and Admin API. The test must be able to set the alias, mapper configuration, `firstBrokerLoginFlowAlias`, and `postBrokerLoginFlowAlias` explicitly. The IdP fixture contributes only protocol endpoint/key settings. Created provider and mapper resources must register cleanup with the managed realm.
+Create and configure the identity provider in the managed realm using the Framework's `IdentityProviderBuilder` and Admin API. Set the alias, mapper configuration, `firstBrokerLoginFlowAlias`, and `postBrokerLoginFlowAlias` explicitly. The IdP fixture contributes protocol endpoint and key settings; register created provider and mapper resources for cleanup with the managed realm.
 
 The app-facing browser flow remains interactive. Use `oauth.loginForm().open()` or `saml.startLogin()`, then drive every expected Keycloak screen with Framework page objects or Selenium. This allows assertions and actions at custom authenticators, consent pages, account-link confirmation, and required actions before the final protocol response is checked.
 
@@ -67,7 +67,7 @@ The browser-backed client helpers expose the browser while a flow is in progress
 
 ## Broker-link query API
 
-The Framework already exposes `ManagedUser.admin().getFederatedIdentity()` for a known local user. To make broker-created users equally straightforward to inspect, add a small read-only helper:
+The Framework exposes `ManagedUser.admin().getFederatedIdentity()` for a known local user. For users created during broker login, the extension provides a read-only helper:
 
 ```java
 BrokeredUser brokeredUser = BrokerIdentityLinks.forRealm(realm).findByUsername("alice");
@@ -83,7 +83,7 @@ assertTrue(brokeredUser.identityProvider("other-provider").isEmpty());
 
 The test IdPs are intentionally small and deterministic.
 They do not reproduce arbitrary third-party IdP UIs, logout, all OIDC extensions, SAML encryption, or every signature algorithm.
-A separate Keycloak server should be used when the test needs implementation-to-implementation interoperability rather than Keycloak configuration behavior.
+Use a separate Keycloak server when the test needs implementation-to-implementation interoperability rather than Keycloak configuration behavior.
 
 ## Custom authenticators and required actions
 

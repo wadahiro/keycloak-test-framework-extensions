@@ -3,7 +3,7 @@
 Install locally until the maintainer publishes artifacts:
 
 ```sh
-mvn -pl runtime-classpath-maven-plugin,extension-undertow,runtime-undertow15 -am install -DskipTests
+mvn -pl runtime-classpath-maven-plugin,extension-undertow,extension-saml,extension-broker,extension-ldap,runtime-undertow15 -am install -DskipTests
 ```
 
 Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-undertow:0.1.0-SNAPSHOT` to a separate integration-test module with test scope.

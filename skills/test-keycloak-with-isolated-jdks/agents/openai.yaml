@@ -1,4 +1,0 @@
-interface:
-  display_name: "Isolated JDK Keycloak Tests"
-  short_description: "Separate Keycloak server and test-runner JDKs"
-  default_prompt: "Use $test-keycloak-with-isolated-jdks to add legacy Keycloak integration tests while preserving existing unit-test JDKs."

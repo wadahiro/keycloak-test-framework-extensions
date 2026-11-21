@@ -1,0 +1,4 @@
+interface:
+  display_name: "Keycloak Test Framework Extensions"
+  short_description: "Test Keycloak login, brokering, and LDAP flows"
+  default_prompt: "Use $keycloak-test-framework-extensions to test Keycloak configuration and custom providers with these extensions."

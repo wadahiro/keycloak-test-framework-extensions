@@ -85,7 +85,7 @@ For tests where Keycloak brokers authentication to an external OIDC or SAML prov
 </dependency>
 ```
 
-See [OIDC and SAML login examples](client-login-examples.md) and [broker authentication test design](broker-testing-design.md) for browser-flow examples and IdP fixtures. Keep integration tests in a separate Maven module from applications or SPI providers compiled against older Keycloak APIs. Test-scoped Framework dependencies do not affect the main source compile classpath, but they are present on the integration test compile and runtime classpaths and can conflict with old Keycloak types if test sources compile the SPI implementation in the same module.
+See [OIDC and SAML login examples](client-login-examples.md) and the [broker authentication test guide](broker-testing-design.md) for browser-flow examples and IdP fixtures. Keep integration tests in a separate Maven module from applications or SPI providers compiled against older Keycloak APIs. Test-scoped Framework dependencies do not affect the main source compile classpath, but they are present on the integration test compile and runtime classpaths and can conflict with old Keycloak types if test sources compile the SPI implementation in the same module.
 
 In the build's `<plugins>` section, add:
 

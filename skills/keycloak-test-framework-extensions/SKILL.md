@@ -1,14 +1,14 @@
 ---
-name: test-keycloak-with-isolated-jdks
-description: Add or troubleshoot supported Keycloak 15.0.2 and 20–26 integration tests with an isolated server JVM, a modern test runner, and automatic H2 snapshot reset while preserving existing unit-test JDKs.
+name: keycloak-test-framework-extensions
+description: Use this repository's Keycloak Test Framework extensions to test browser login, SAML clients, OIDC/SAML identity brokering, LDAP federation, and isolated Keycloak runtimes with fast H2 reset.
 license: Apache-2.0
 metadata:
   runtime: JDK 25 runner with per-version isolated Keycloak server JDKs
 ---
 
-# Test Keycloak with isolated JDKs
+# Keycloak Test Framework extensions
 
-Use this skill for this repository's process-managed extensions or for adding it to another Maven project.
+Use this skill for this repository's extensions or for adding them to another Maven project.
 It is not a general Keycloak deployment or upgrade workflow.
 
 ## Establish the three runtime boundaries
@@ -29,7 +29,7 @@ Do not describe this as same-JVM embedded execution.
 2. Read [references/extension-api.md](references/extension-api.md) for dependencies, per-version runtime artifacts, service-discovery aliases, and configuration.
 3. Read [references/h2-snapshot.md](references/h2-snapshot.md) for automatic H2 snapshot reset.
 4. Read [references/ide-testing.md](references/ide-testing.md) when configuring IntelliJ IDEA or Eclipse JUnit launches.
-5. Read [the broker test design](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
+5. Read [the broker testing guide](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
 6. Read [LDAP federation testing](../../docs/ldap-testing.md) when testing LDAP User Federation or LDAP storage mappers.
 
 Use separate Maven modules for Keycloak SPI development and Framework-based integration tests.

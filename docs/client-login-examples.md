@@ -100,11 +100,11 @@ SamlLoginResult result = flow.awaitResult(30, TimeUnit.SECONDS);
 
 For a custom authenticator or required action, create a Framework `AbstractPage` subclass for its screen and call `browser.page().createPage(YourPage.class)`, or use `browser.driver()` directly with Selenium. The flow helper does not assume a fixed sequence of screens; the test drives each expected step and waits for the final ACS response. OIDC tests can use the same page objects with `oauth.loginForm().open()` and finish with `oauth.parseLoginResponse()`.
 
-The default SAML client requires Keycloak to sign its response and assertion and uses the realm's published signing certificate for validation. Provide a custom `ClientConfig` through `@InjectSamlClient(config = ...)` for client-specific settings. The initial API focuses on SP-initiated login and assertion validation; logout, encrypted assertions, and IdP-initiated login are outside its scope.
+The default SAML client requires Keycloak to sign its response and assertion and uses the realm's published signing certificate for validation. Provide a custom `ClientConfig` through `@InjectSamlClient(config = ...)` for client-specific settings. The current API focuses on SP-initiated login and assertion validation; logout, encrypted assertions, and IdP-initiated login are outside its scope.
 
 This helper validates the assertion before returning identity data, but it does not implement an application's session, authorization policy, or full production SP behavior. For application acceptance tests, run the application/SP stack and assert its own authenticated session and authorization decisions.
 
-For broker tests where Keycloak redirects to an external OIDC or SAML IdP, see [broker authentication test design](broker-testing-design.md). That design covers deterministic IdP fixtures, first/post broker flows, mappers, and federated identity link assertions.
+For broker tests where Keycloak redirects to an external OIDC or SAML IdP, see the [broker authentication test guide](broker-testing-design.md). It covers deterministic IdP fixtures, first/post broker flows, mappers, and federated identity link assertions.
 
 ## Broker mapper and flow checks
 

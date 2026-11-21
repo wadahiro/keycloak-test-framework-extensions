@@ -5,7 +5,7 @@
     <artifactId>keycloak-test-framework-extensions-parent</artifactId>
     <packaging>pom</packaging>
     <name>Keycloak Test Framework Extensions</name>
-    <description>Run supported Keycloak versions in isolated JVMs with automatic H2 snapshot reset.</description>
+    <description>Keycloak Test Framework extensions for isolated runtimes, H2 reset, browser login, identity brokering, and LDAP federation tests.</description>
     <url>https://github.com/wadahiro/keycloak-test-framework-extensions</url>
     <licenses>
         <license>

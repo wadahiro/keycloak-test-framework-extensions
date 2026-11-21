@@ -1,6 +1,6 @@
 # Keycloak Test Framework Extensions
 
-Run Keycloak integration tests with the [Keycloak Test Framework](https://github.com/keycloak/keycloak/tree/main/test-framework), while running the server in its own JVM. Reuse a warm server and restore H2 database snapshots between test methods.
+Test Keycloak configuration and custom providers through real browser login flows using the [Keycloak Test Framework](https://github.com/keycloak/keycloak/tree/main/test-framework). The extensions add isolated server runtimes, fast H2 reset, SAML client support, OIDC/SAML broker IdP fixtures, and in-memory LDAP federation support.
 
 The server runtime is resolved from Maven; no Keycloak installation or container is needed. The extension supports Keycloak 15.0.2 and selected releases from 20 through 26. See [supported versions and JDKs](docs/getting-started.md#supported-versions).
 
@@ -35,7 +35,7 @@ public class LoginIT {
 }
 ```
 
-See [OIDC and SAML browser login examples](docs/client-login-examples.md), [broker testing with OIDC and SAML IdPs](docs/broker-testing-design.md), [LDAP federation testing](docs/ldap-testing.md), [snapshot setup and lifecycle](docs/h2-snapshot.md), and [IDE test execution](docs/ide-testing.md). The snapshot covers database data, IDs, credentials, baseline user/client sessions, and model-cache clearing. Use class/global fixtures and sequential tests.
+See [Getting Started](docs/getting-started.md) to configure the Maven repository and dependencies. The guides cover [OIDC and SAML browser login](docs/client-login-examples.md), [identity brokering](docs/broker-testing-design.md), [LDAP federation](docs/ldap-testing.md), [H2 reset](docs/h2-snapshot.md), and [IDE test execution](docs/ide-testing.md).
 
 Apache-2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 This independent community extension was developed with assistance from OpenAI Codex.

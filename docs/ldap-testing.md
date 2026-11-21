@@ -78,6 +78,6 @@ The default LDAP server lifecycle is CLASS.
 Do not run tests in parallel against the shared Keycloak server.
 
 LDAP server configuration and listener settings are fixed for the life of the injected server; snapshots capture directory data, not server configuration.
-The initial helper uses plain LDAP/simple bind and does not emulate Active Directory-specific behavior, TLS, StartTLS, or SASL.
+The helper currently uses plain LDAP/simple bind and does not emulate Active Directory-specific behavior, TLS, StartTLS, or SASL.
 
 See [H2 snapshot lifecycle](h2-snapshot.md) for snapshot setup and reset boundaries.

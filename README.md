@@ -35,7 +35,7 @@ public class LoginIT {
 }
 ```
 
-See [OIDC and SAML browser login examples](docs/client-login-examples.md), [broker testing with OIDC and SAML IdPs](docs/broker-testing-design.md), [snapshot setup and lifecycle](docs/h2-snapshot.md), and [IDE test execution](docs/ide-testing.md). The snapshot covers database data, IDs, credentials, baseline user/client sessions, and model-cache clearing. Use class/global fixtures and sequential tests.
+See [OIDC and SAML browser login examples](docs/client-login-examples.md), [broker testing with OIDC and SAML IdPs](docs/broker-testing-design.md), [LDAP federation testing](docs/ldap-testing.md), [snapshot setup and lifecycle](docs/h2-snapshot.md), and [IDE test execution](docs/ide-testing.md). The snapshot covers database data, IDs, credentials, baseline user/client sessions, and model-cache clearing. Use class/global fixtures and sequential tests.
 
 Apache-2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 This independent community extension was developed with assistance from OpenAI Codex.

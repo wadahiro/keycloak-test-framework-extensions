@@ -38,6 +38,20 @@ Add the extension as a test dependency and configure the runtime adapter under t
 </dependency>
 ```
 
+For LDAP User Federation and LDAP mapper tests, add the in-memory directory helper:
+
+```xml
+<dependency>
+    <groupId>io.github.wadahiro</groupId>
+    <artifactId>keycloak-test-framework-ldap</artifactId>
+    <version>0.1.0</version>
+    <scope>test</scope>
+</dependency>
+```
+
+The LDAP helper uses UnboundID's in-memory LDAP server and restores its directory snapshot together with the H2 baseline.
+See [LDAP federation testing](ldap-testing.md) for setup and scope.
+
 The extension brings in the Keycloak Test Framework core. For OIDC browser-flow tests, add its OAuth module as well:
 
 ```xml

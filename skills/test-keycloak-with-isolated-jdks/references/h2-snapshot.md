@@ -20,9 +20,10 @@ Prefer direct admin operations over `WithCleanup` helpers to avoid additional pe
 Java classes own the database row copy, prepared-batch restore, cache handling, request/timer barrier and process lifecycle.
 The skill configures these supported mechanisms; do not implement competing restore scripts.
 The whole disposable DB is restored, including master and unrelated realms.
+Injected extension resources implementing `H2SnapshotParticipant`, including the UnboundID LDAP fixture, capture and restore alongside the H2 baseline.
 User/client sessions present at capture are deep-copied and restored, while later sessions disappear; this preserves administrative sessions without a password grant after every reset.
 Model/revision/key caches are evicted; transient authentication-session, login-failure and action-token caches are cleared.
-Time is not rewound and external resources/arbitrary provider state are not restored.
+Time is not rewound; external resources and arbitrary provider state are not restored unless an injected extension resource implements `H2SnapshotParticipant`.
 Wait for all asynchronous work; reset failure stops the child and requires a fresh server/test JVM.
 
 Validate with `mvn -pl undertow-integration-tests -am verify` for the integration module and `mvn verify` for the full build.

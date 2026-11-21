@@ -1,5 +1,7 @@
 package io.github.wadahiro.keycloak.undertow;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.keycloak.testframework.injection.ManagedTestResource;
 
@@ -10,12 +12,14 @@ public final class H2Snapshot extends ManagedTestResource implements AutoCloseab
     private boolean captured;
     private boolean closed;
     private double lastRestoreMillis;
+    private final List<H2SnapshotParticipant> participants = new ArrayList<>();
 
     H2Snapshot(UndertowProcessServer server) { this.server = server; }
 
     /** Replace the baseline, for example at the end of a Framework @TestSetup method. */
     public synchronized void capture() {
         checkOpen();
+        for (H2SnapshotParticipant participant : participants) participant.capture();
         if (captured) server.command("RELEASE", lease);
         captured = false;
         server.command("CAPTURE", lease);
@@ -27,12 +31,19 @@ public final class H2Snapshot extends ManagedTestResource implements AutoCloseab
         checkOpen();
         if (!captured) throw new IllegalStateException("No H2 baseline has been captured");
         long started = System.nanoTime();
+        for (H2SnapshotParticipant participant : participants) participant.restore();
         server.command("RESTORE", lease);
         lastRestoreMillis = (System.nanoTime() - started) / 1e6;
     }
 
     public synchronized double getLastRestoreMillis() { return lastRestoreMillis; }
     public long getServerPid() { return server.pid(); }
+    public synchronized void addParticipant(H2SnapshotParticipant participant) {
+        checkOpen();
+        if (participants.contains(participant)) return;
+        if (captured) throw new IllegalStateException("Snapshot participants must be registered before the first capture");
+        participants.add(participant);
+    }
     synchronized void initialize() { if (!captured) capture(); }
     @Override public void runCleanup() { restore(); }
     @Override public void dirty() { throw new UnsupportedOperationException("Use capture() to replace an H2 baseline"); }

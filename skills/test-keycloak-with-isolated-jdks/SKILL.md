@@ -30,6 +30,7 @@ Do not describe this as same-JVM embedded execution.
 3. Read [references/h2-snapshot.md](references/h2-snapshot.md) for automatic H2 snapshot reset.
 4. Read [references/ide-testing.md](references/ide-testing.md) when configuring IntelliJ IDEA or Eclipse JUnit launches.
 5. Read [the broker test design](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
+6. Read [LDAP federation testing](../../docs/ldap-testing.md) when testing LDAP User Federation or LDAP storage mappers.
 
 Use separate Maven modules for Keycloak SPI development and Framework-based integration tests.
 The SPI module compiles against the target Keycloak API and its supported JDK; the integration-test module consumes the built SPI artifact and contains the modern Framework/JUnit tests.

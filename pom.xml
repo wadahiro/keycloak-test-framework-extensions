@@ -18,6 +18,7 @@
         <module>extension-undertow</module>
         <module>extension-saml</module>
         <module>extension-broker</module>
+        <module>extension-ldap</module>
         <module>examples/java11-unit-tests</module>
         <module>runtime-classpath-maven-plugin</module>
         <module>undertow-integration-tests</module>
@@ -30,6 +31,7 @@
         <unit.java.home>${keycloak.java.home}</unit.java.home>
         <tested.keycloak.version>15.0.2</tested.keycloak.version>
         <tested.server.java>11</tested.server.java>
+        <unboundid.version>7.0.5</unboundid.version>
         <kc.test.undertow.version>${tested.keycloak.version}</kc.test.undertow.version>
     </properties>
     <build>

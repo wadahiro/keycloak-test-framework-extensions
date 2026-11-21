@@ -29,3 +29,7 @@ Listeners bind to loopback.
 The runtime Maven plugin generates the child JVM classpath descriptor in `target/test-classes/META-INF/keycloak-test-runtime.properties`; bind `prepare` to `process-test-classes` or run it before direct IDE JUnit launches.
 
 Use the [runtime plugin guide](../../../docs/runtime-plugin.md) for the runtime adapter setup and the [H2 snapshot guide](h2-snapshot.md) for annotations, fixture setup and reset boundaries.
+
+For LDAP User Federation tests, add `io.github.wadahiro:keycloak-test-framework-ldap` with test scope.
+It starts an UnboundID in-memory LDAP server in the test JVM and coordinates directory snapshot capture and restore with `H2Snapshot`.
+Read [the LDAP testing guide](../../../docs/ldap-testing.md) for LDAP component configuration and supported limitations.

@@ -137,7 +137,7 @@ Child EOF/shutdown handling also closes Keycloak when the test process exits.
 - Admin Console and Account Console frontend assets are omitted from the packaged server runtime; exercise the server through its APIs and login pages.
 - Keep the schema fixed; metadata changes such as table/column/index/foreign-key changes fail reset.
   Arbitrary DDL and non-PUBLIC tables are not supported workloads.
-- External stores, files, emails, custom provider state, JVM system properties and arbitrary factory caches are not snapshotted.
+- External stores, files, emails, custom provider state, JVM system properties and arbitrary factory caches are not snapshotted unless an injected resource implements `H2SnapshotParticipant`.
   Modern `KeycloakServerConfig`, provider hot deployment, custom runtime classpaths and TLS are not implemented by this backend.
 
 ## Build and verification

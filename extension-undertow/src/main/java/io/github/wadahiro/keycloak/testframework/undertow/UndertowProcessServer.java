@@ -44,11 +44,15 @@ public final class UndertowProcessServer implements KeycloakServer {
                 if (!Files.isRegularFile(Path.of(entry))) throw new IllegalStateException("Prepared Keycloak runtime dependency is missing: " + entry + ". Re-run keycloak-test-runtime:prepare.");
             }
             String executable = System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java";
-            ProcessBuilder command = new ProcessBuilder(javaHome.resolve("bin").resolve(executable).toString(),
-                    "-Djava.util.logging.manager=org.jboss.logmanager.LogManager",
-                    "--add-opens=java.base/java.util=ALL-UNNAMED",
-                    "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-                    "-cp", runtime.classpath(), runtime.mainClass(), run.toString());
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(javaHome.resolve("bin").resolve(executable).toString());
+            if (!runtime.version().startsWith("15.")) {
+                commandLine.add("-Djava.util.logging.manager=org.jboss.logmanager.LogManager");
+            }
+            commandLine.add("--add-opens=java.base/java.util=ALL-UNNAMED");
+            commandLine.add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED");
+            commandLine.addAll(List.of("-cp", runtime.classpath(), runtime.mainClass(), run.toString()));
+            ProcessBuilder command = new ProcessBuilder(commandLine);
             command.environment().put("KCTF_RUNTIME_JAVA", Integer.toString(runtime.javaFeature()));
             command.environment().put("KCTF_ADMIN_USERNAME", value("admin.username", "admin"));
             command.environment().put("KCTF_ADMIN_PASSWORD", value("admin.password", "admin"));

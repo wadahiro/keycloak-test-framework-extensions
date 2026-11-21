@@ -53,11 +53,11 @@ public class EmbeddedRuntime {
                     .setClassLoader(getClass().getClassLoader()).setContextPath("/auth")
                     .setDeploymentName("Keycloak15Embedded").setDefaultEncoding("UTF-8")
                     .setDefaultServletConfig(new DefaultServletConfig(true));
-            info.addFilter(Servlets.filter("SnapshotBarrier", QuiescentFilter.class));
+            info.addFilter(Servlets.filter("SnapshotBarrier", QuiescentFilter.class).setAsyncSupported(true));
             info.addFilterUrlMapping("SnapshotBarrier", "/*", DispatcherType.REQUEST);
             info.addFilter(Servlets.filter("SessionFilter", UndertowRequestFilter.class,
                     () -> new io.undertow.servlet.util.ImmediateInstanceHandle<>(new UndertowRequestFilter(null)))
-                    .setAsyncSupported(false));
+                    .setAsyncSupported(true));
             info.addFilterUrlMapping("SessionFilter", "/*", DispatcherType.REQUEST);
             server.deploy(info);
             sessionFactory = KeycloakApplication.getSessionFactory();

@@ -16,6 +16,7 @@ import org.keycloak.testframework.ui.annotations.InjectPage;
 import org.keycloak.testframework.ui.page.IdpReviewUserProfilePage;
 import org.keycloak.testframework.ui.page.LoginPage;
 import org.keycloak.testframework.ui.webdriver.ManagedWebDriver;
+import org.openqa.selenium.By;
 
 import io.github.wadahiro.keycloak.testframework.broker.BrokerIdentityLinks;
 import io.github.wadahiro.keycloak.testframework.broker.InjectSamlTestIdentityProvider;
@@ -27,6 +28,7 @@ import io.github.wadahiro.keycloak.testframework.saml.SamlLoginResult;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KeycloakIntegrationTest
 public class SamlBrokerIT {
@@ -39,6 +41,9 @@ public class SamlBrokerIT {
 
     @InjectPage(webDriverRef = "broker-test")
     LoginPage loginPage;
+
+    @InjectOAuthClient(ref = "broker-login", webDriverRef = "broker-test")
+    OAuthClient brokerLogin;
 
     @InjectSamlClient(webDriverRef = "broker-test")
     SamlClient app;
@@ -66,11 +71,23 @@ public class SamlBrokerIT {
         identityProvider.nextLogin(SamlIdentity.nameId(REMOTE_SUBJECT)
                 .attribute("email", "brokered-saml@example.test"));
 
-        var flow = app.startLogin();
-        loginPage.assertCurrent();
-        loginPage.clickSocial(IDP_ALIAS);
-        completeProfileReviewIfRequired();
+        boolean keycloak15 = System.getProperty("expected.server.version", "").startsWith("15.");
+        if (keycloak15) {
+            // Keycloak 15 stores broker and SP request IDs under the same client note.
+            // Complete broker login first so the subsequent SP request sets the response correlation ID.
+            brokerLogin.openLoginForm();
+            BrowserPageAssertions.waitForLoginForm(browser);
+            loginPage.clickSocial(IDP_ALIAS);
+            completeProfileReviewIfRequired();
+            assertTrue(brokerLogin.parseLoginResponse().isRedirected());
+        }
 
+        var flow = app.startLogin();
+        if (!keycloak15) {
+            BrowserPageAssertions.waitForLoginForm(browser);
+            loginPage.clickSocial(IDP_ALIAS);
+            completeProfileReviewIfRequired();
+        }
         SamlLoginResult result = flow.awaitResult(30, TimeUnit.SECONDS);
         assertNotNull(result.nameId());
         var linkedUser = BrokerIdentityLinks.forRealm(realm).findByUsername(LOCAL_USERNAME);
@@ -79,10 +96,8 @@ public class SamlBrokerIT {
     }
 
     private void completeProfileReviewIfRequired() {
-        if ("login-idp-review-user-profile".equals(browser.page().getCurrentPageId())) {
-            var reviewPage = browser.page().createPage(IdpReviewUserProfilePage.class);
-            reviewPage.assertCurrent();
-            reviewPage.update("Brokered", "SAML", "brokered-saml@example.test");
-        }
+        BrowserPageAssertions.waitForElement(browser, By.id("firstName"));
+        var reviewPage = browser.page().createPage(IdpReviewUserProfilePage.class);
+        reviewPage.update("Brokered", "SAML", "brokered-saml@example.test");
     }
 }

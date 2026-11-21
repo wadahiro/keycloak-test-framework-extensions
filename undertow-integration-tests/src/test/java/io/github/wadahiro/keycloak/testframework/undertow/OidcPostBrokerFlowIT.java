@@ -103,16 +103,21 @@ public class OidcPostBrokerFlowIT {
                 .claim("email_verified", true));
 
         app.openLoginForm();
-        loginPage.assertCurrent();
+        BrowserPageAssertions.waitForLoginForm(browser);
         loginPage.clickSocial(IDP_ALIAS);
 
         // The external IdP has returned; the configured post-broker authenticator asks for local credentials.
         assertTrue(browser.driver().findElements(By.id("password")).size() > 0,
                 "Expected the post-broker password page, page=" + browser.page().getCurrentPageId()
                         + ", url=" + browser.getCurrentUrl());
+        var usernameField = browser.driver().findElements(By.id("username"));
+        if (!usernameField.isEmpty()) {
+            usernameField.get(0).sendKeys(USERNAME);
+        }
         PasswordPage passwordPage = browser.page().createPage(PasswordPage.class);
         passwordPage.fillPassword(user.getPassword());
         passwordPage.submit();
+        BrowserPageAssertions.waitForUrlToLeave(browser, "/login-actions/post-broker-login");
 
         var authorization = app.parseLoginResponse();
         assertTrue(authorization.isRedirected(), "Post-broker flow did not return to the OIDC client: "

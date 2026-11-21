@@ -12,10 +12,8 @@ import org.keycloak.testframework.oauth.annotations.InjectOAuthClient;
 import org.keycloak.testframework.realm.IdentityProviderBuilder;
 import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
-import org.keycloak.representations.idm.AuthenticationExecutionInfoRepresentation;
 import org.keycloak.testframework.ui.annotations.InjectWebDriver;
 import org.keycloak.testframework.ui.annotations.InjectPage;
-import org.keycloak.testframework.ui.page.IdpReviewUserProfilePage;
 import org.keycloak.testframework.ui.page.LoginUpdateProfilePage;
 import org.keycloak.testframework.ui.page.LoginPage;
 import org.keycloak.testframework.ui.webdriver.ManagedWebDriver;
@@ -27,14 +25,12 @@ import io.github.wadahiro.keycloak.testframework.broker.OidcTestIdentityProvider
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @KeycloakIntegrationTest
 public class OidcBrokerIT {
     private static final String IDP_ALIAS = "test-oidc-idp";
     private static final String LOCAL_USERNAME = "brokered-oidc-user";
     private static final String REMOTE_SUBJECT = "directory-oidc-42";
-    private static final String FIRST_LOGIN_FLOW = "test-first-broker-login";
 
     @InjectRealm
     ManagedRealm realm;
@@ -53,20 +49,9 @@ public class OidcBrokerIT {
 
     @TestSetup
     public void installIdentityProvider() {
-        var builder = IdentityProviderBuilder.create().alias(IDP_ALIAS).providerId("oidc")
-                .enabled(true).firstBrokerLoginFlowAlias(FIRST_LOGIN_FLOW);
+        var builder = IdentityProviderBuilder.create().alias(IDP_ALIAS).providerId("oidc").enabled(true);
         identityProvider.keycloakConfig("test-broker-client", "test-broker-secret")
                 .forEach(builder::attribute);
-        try (var response = realm.admin().flows().copy(
-                realm.admin().toRepresentation().getFirstBrokerLoginFlow(), Map.of("newName", FIRST_LOGIN_FLOW))) {
-            assertEquals(201, response.getStatus(), "Failed to copy the first broker login flow");
-        }
-        AuthenticationExecutionInfoRepresentation profileReview = realm.admin().flows().getExecutions(FIRST_LOGIN_FLOW)
-                .stream().filter(execution -> "idp-review-profile".equals(execution.getProviderId()))
-                .findFirst().orElse(null);
-        assertNotNull(profileReview, "Copied first broker flow has no profile review execution");
-        profileReview.setRequirement("DISABLED");
-        realm.admin().flows().updateExecutions(FIRST_LOGIN_FLOW, profileReview);
         try (var response = realm.admin().identityProviders().create(builder.build())) {
             assertEquals(201, response.getStatus(), "Failed to install the test OIDC broker IdP: "
                     + response.readEntity(String.class));
@@ -92,7 +77,7 @@ public class OidcBrokerIT {
                 .claim("department", "engineering"));
 
         app.openLoginForm();
-        loginPage.assertCurrent();
+        BrowserPageAssertions.waitForLoginForm(browser);
         assertTrue(!browser.cookies().getAll().isEmpty(), "Keycloak login did not establish browser cookies");
         loginPage.clickSocial(IDP_ALIAS);
         completeProfileReviewIfRequired();
@@ -117,11 +102,12 @@ public class OidcBrokerIT {
     }
 
     private void completeProfileReviewIfRequired() {
-        if ("login-idp-review-user-profile".equals(browser.page().getCurrentPageId())) {
-            var reviewPage = browser.page().createPage(IdpReviewUserProfilePage.class);
-            reviewPage.assertCurrent();
-            reviewPage.update("Brokered", "OIDC", "brokered-oidc@example.test");
-        }
+        BrowserPageAssertions.waitForElement(browser, org.openqa.selenium.By.id("firstName"));
+        BrowserPageAssertions.waitForElement(browser, org.openqa.selenium.By.id("lastName"));
+        var reviewPage = browser.page().createPage(LoginUpdateProfilePage.class);
+        assertEquals("engineering", reviewPage.getFirstName(),
+                "The department claim mapper should set the local first name before profile review");
+        reviewPage.update(reviewPage.getFirstName(), "OIDC", reviewPage.getEmail());
     }
 
     private void completeProfileRequiredActionIfPresent() {

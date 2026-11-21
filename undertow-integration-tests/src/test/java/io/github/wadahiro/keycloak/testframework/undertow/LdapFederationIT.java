@@ -14,11 +14,14 @@ import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.testframework.annotations.InjectRealm;
 import org.keycloak.testframework.annotations.KeycloakIntegrationTest;
 import org.keycloak.testframework.annotations.TestSetup;
+import org.keycloak.testframework.injection.LifeCycle;
 import org.keycloak.testframework.oauth.OAuthClient;
 import org.keycloak.testframework.oauth.annotations.InjectOAuthClient;
 import org.keycloak.testframework.realm.ManagedRealm;
+import org.keycloak.testframework.ui.annotations.InjectWebDriver;
 import org.keycloak.testframework.ui.annotations.InjectPage;
 import org.keycloak.testframework.ui.page.LoginPage;
+import org.keycloak.testframework.ui.webdriver.ManagedWebDriver;
 
 import io.github.wadahiro.keycloak.testframework.ldap.InjectLdapTestServer;
 import io.github.wadahiro.keycloak.testframework.ldap.LdapTestServer;
@@ -47,6 +50,9 @@ public class LdapFederationIT {
 
     @InjectPage
     LoginPage loginPage;
+
+    @InjectWebDriver(lifecycle = LifeCycle.CLASS)
+    ManagedWebDriver browser;
 
     @TestSetup
     public void configureLdapFederation() throws Exception {
@@ -134,7 +140,7 @@ public class LdapFederationIT {
 
     private void authenticateAndAssertDepartment(String expectedDepartment) {
         app.openLoginForm();
-        loginPage.assertCurrent();
+        BrowserPageAssertions.waitForLoginForm(browser);
         loginPage.fillLogin(USERNAME, PASSWORD);
         loginPage.submit();
         var authorization = app.parseLoginResponse();

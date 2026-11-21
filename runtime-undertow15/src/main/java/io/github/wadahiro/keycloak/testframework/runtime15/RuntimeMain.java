@@ -21,6 +21,8 @@ public final class RuntimeMain {
 
     public static void main(String[] args) throws Exception {
         if (Runtime.version().feature() != 11) throw new IllegalArgumentException("Keycloak 15 runtime requires Java 11");
+        var logConfig = RuntimeMain.class.getResource("/log4j.properties");
+        if (logConfig != null) org.apache.log4j.PropertyConfigurator.configure(logConfig);
         String jdbc = "jdbc:h2:mem:kctf_" + UUID.randomUUID() + ";DB_CLOSE_DELAY=0;LOCK_TIMEOUT=5000";
         System.setProperty("kctf.jdbc", jdbc);
         runtime = new EmbeddedRuntime();

@@ -17,12 +17,12 @@ public final class UndertowExtension implements TestFrameworkExtension {
         @Override public LifeCycle getDefaultLifecycle() { return LifeCycle.GLOBAL; }
         @Override public int order() { return SupplierOrder.KEYCLOAK_SERVER; }
         @Override public KeycloakServer getValue(InstanceContext<KeycloakServer, KeycloakIntegrationTest> context) {
-            if (context.getAnnotation().config() != DefaultKeycloakServerConfig.class) {
-                throw new IllegalArgumentException("Modern server configuration is unsupported by Undertow 15.0.2");
-            }
             rejectParallel(context);
+            KeycloakServerConfig config = SupplierHelpers.getInstance(context.getAnnotation().config());
+            KeycloakServerConfigBuilder builder = KeycloakServerConfigBuilder.startDev();
+            config.configure(builder);
             UndertowProcessServer server = new UndertowProcessServer();
-            server.start(null, false);
+            server.start(builder, false);
             return server;
         }
         @Override public boolean compatible(InstanceContext<KeycloakServer, KeycloakIntegrationTest> a,

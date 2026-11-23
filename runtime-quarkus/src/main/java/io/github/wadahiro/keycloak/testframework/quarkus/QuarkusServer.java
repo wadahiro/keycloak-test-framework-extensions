@@ -42,7 +42,7 @@ public class QuarkusServer {
         Path home = Path.of(System.getenv().getOrDefault("KCTF_HOME_DIR",
                 Path.of(System.getProperty("java.io.tmpdir"), "kc-quarkus-test-home").toString()));
         Files.createDirectories(home);
-        installProviderDependencies(home);
+        List<Path> providerArchives = installProviderDependencies(home);
         Path timerProvider = versionMajor >= 23 ? installRequestGateArchive(home, versionMajor >= 26) : null;
         String[] kcArgs = args.length == 0 ? new String[] {"start-dev", "--db=dev-mem", "--http-port=" + port,
                 "--hostname-strict=false", "--http-enabled=true", "--bootstrap-admin-client-id=temp-admin",
@@ -56,6 +56,9 @@ public class QuarkusServer {
                 .setFlatClassPath(true)
                 .setMode(QuarkusBootstrap.Mode.TEST);
         if (timerProvider != null) builder.addAdditionalApplicationArchive(new AdditionalDependency(timerProvider, false, true));
+        for (Path providerArchive : providerArchives) {
+            builder.addAdditionalApplicationArchive(new AdditionalDependency(providerArchive, false, true));
+        }
         setKeycloakHome(home);
         CuratedApplication curated = builder.build().bootstrap();
         AugmentAction augmentor = curated.createAugmentor();
@@ -168,9 +171,10 @@ public class QuarkusServer {
         return new BootstrapAppModelResolver(resolver).resolveModel(builtModule);
     }
 
-    private static void installProviderDependencies(Path home) throws Exception {
+    private static List<Path> installProviderDependencies(Path home) throws Exception {
         Path providers = home.resolve("providers");
         Files.createDirectories(providers);
+        List<Path> installedProviders = new java.util.ArrayList<>();
         String coordinates = System.getenv().getOrDefault("KCTF_PROVIDER_DEPENDENCIES", "");
         if (!coordinates.isBlank()) {
             MavenArtifactResolver resolver = MavenArtifactResolver.builder().setWorkspaceDiscovery(true).setOffline(false).build();
@@ -181,12 +185,18 @@ public class QuarkusServer {
                 var artifact = resolver.resolve(new DefaultArtifact(parts[0], parts[1], "", "jar", parts[2])).getArtifact();
                 Path target = providers.resolve(parts[0] + "__" + parts[1] + ".jar");
                 Files.copy(artifact.getFile().toPath(), target, StandardCopyOption.REPLACE_EXISTING);
+                installedProviders.add(target);
             }
         }
-        String currentProjectClasses = System.getenv("KCTF_CURRENT_PROJECT_CLASSES");
-        if (currentProjectClasses != null && !currentProjectClasses.isBlank()) {
-            addDirectoryAsJar(Path.of(currentProjectClasses), providers.resolve("test-project-provider.jar"));
+        String localProviderClasses = System.getenv().getOrDefault("KCTF_LOCAL_PROVIDER_CLASSES", "");
+        int localProviderIndex = 0;
+        for (String classes : localProviderClasses.split(";")) {
+            if (classes.isBlank()) continue;
+            Path localProvider = providers.resolve("test-project-provider-" + localProviderIndex++ + ".jar");
+            addDirectoryAsJar(Path.of(classes), localProvider);
+            installedProviders.add(localProvider);
         }
+        return installedProviders;
     }
 
     private static void addDirectoryAsJar(Path classes, Path target) throws Exception {

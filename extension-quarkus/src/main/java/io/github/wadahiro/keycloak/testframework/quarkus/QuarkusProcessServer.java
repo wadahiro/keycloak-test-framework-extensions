@@ -88,9 +88,7 @@ public final class QuarkusProcessServer implements KeycloakServer {
             builderProcess.environment().put("KCTF_HTTP_TEST_PORT", Integer.toString(httpPort));
             builderProcess.environment().put("KCTF_HTTPS_TEST_PORT", Integer.toString(httpsPort));
             builderProcess.environment().put("KCTF_PROVIDER_DEPENDENCIES", String.join(";", providers.coordinates()));
-            if (providers.currentProjectClasses() != null) {
-                builderProcess.environment().put("KCTF_CURRENT_PROJECT_CLASSES", providers.currentProjectClasses());
-            }
+            builderProcess.environment().put("KCTF_LOCAL_PROVIDER_CLASSES", String.join(";", providers.localProviderClasses()));
             builderProcess.environment().put("KCTF_SCHEME", tlsEnabled ? "https" : "http");
             builderProcess.environment().put("KCTF_KEYCLOAK_VERSION", keycloakVersion);
             builderProcess.environment().put("KCTF_HOME_DIR", runDirectory.resolve("home").toString());
@@ -142,8 +140,9 @@ public final class QuarkusProcessServer implements KeycloakServer {
         var dependencies = (Iterable<Object>) dependenciesMethod.invoke(builder);
         var updater = Class.forName("org.keycloak.testframework.util.MavenProjectUtil")
                 .getMethod("updateDependencyDetails", Class.forName("org.keycloak.testframework.server.KeycloakDependency"));
+        Class<?> projectUtil = Class.forName("org.keycloak.testframework.util.MavenProjectUtil");
         List<String> coordinates = new java.util.ArrayList<>();
-        String currentProjectClasses = null;
+        List<String> localProviderClasses = new java.util.ArrayList<>();
         for (Object dependency : dependencies) {
             boolean currentProject = (boolean) dependency.getClass().getMethod("dependencyCurrentProject").invoke(dependency);
             Object updated = updater.invoke(null, dependency);
@@ -154,18 +153,23 @@ public final class QuarkusProcessServer implements KeycloakServer {
                 throw new IllegalArgumentException("Unable to resolve Keycloak provider dependency: " + dependency);
             }
             if (currentProject) {
-                Object module = Class.forName("org.keycloak.testframework.util.MavenProjectUtil")
-                        .getMethod("getCurrentModule").invoke(null);
+                Object module = projectUtil.getMethod("getCurrentModule").invoke(null);
                 Object classesDir = module.getClass().getMethod("getClassesDir").invoke(module);
-                currentProjectClasses = classesDir.toString();
+                localProviderClasses.add(classesDir.toString());
             } else {
-                coordinates.add(groupId + ":" + artifactId + ":" + version);
+                try {
+                    Object module = projectUtil.getMethod("findLocalModule", String.class, String.class).invoke(null, groupId, artifactId);
+                    Object classesDir = module.getClass().getMethod("getClassesDir").invoke(module);
+                    localProviderClasses.add(classesDir.toString());
+                } catch (java.lang.reflect.InvocationTargetException notLocal) {
+                    coordinates.add(groupId + ":" + artifactId + ":" + version);
+                }
             }
         }
-        return new ProviderSetup(coordinates, currentProjectClasses);
+        return new ProviderSetup(coordinates, localProviderClasses);
     }
 
-    private record ProviderSetup(List<String> coordinates, String currentProjectClasses) { }
+    private record ProviderSetup(List<String> coordinates, List<String> localProviderClasses) { }
 
     private void readOutput(CompletableFuture<Void> ready, int port) {
         Path log = runDirectory.resolve("server.log");

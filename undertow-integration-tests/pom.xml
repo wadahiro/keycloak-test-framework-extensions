@@ -29,6 +29,12 @@
         </dependency>
         <dependency>
             <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+            <artifactId>undertow-spi-fixture</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
             <artifactId>keycloak-test-framework-saml</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>

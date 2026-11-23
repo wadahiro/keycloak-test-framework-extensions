@@ -25,7 +25,7 @@ public final class UndertowProcessServer implements KeycloakServer {
     public static String value(String name, String fallback) { return Config.get("kc.test.undertow." + name, fallback, String.class); }
 
     @Override public synchronized void start(KeycloakServerConfigBuilder builder, boolean tlsEnabled) {
-        if (tlsEnabled || builder != null) throw new IllegalArgumentException("Undertow runtime supports its fixed HTTP/H2 configuration only");
+        if (tlsEnabled) throw new IllegalArgumentException("Undertow runtime supports its fixed HTTP/H2 configuration only");
         if (process != null || failed) throw new IllegalStateException("This server instance has already been started");
         try {
             RuntimeDescriptor runtime = RuntimeDescriptor.select(value("version", null));
@@ -51,7 +51,9 @@ public final class UndertowProcessServer implements KeycloakServer {
             }
             commandLine.add("--add-opens=java.base/java.util=ALL-UNNAMED");
             commandLine.add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED");
-            commandLine.addAll(List.of("-cp", runtime.classpath(), runtime.mainClass(), run.toString()));
+            String providers = providerClasspath(builder);
+            String classpath = providers.isEmpty() ? runtime.classpath() : runtime.classpath() + File.pathSeparator + providers;
+            commandLine.addAll(List.of("-cp", classpath, runtime.mainClass(), run.toString()));
             ProcessBuilder command = new ProcessBuilder(commandLine);
             command.environment().put("KCTF_RUNTIME_JAVA", Integer.toString(runtime.javaFeature()));
             command.environment().put("KCTF_ADMIN_USERNAME", value("admin.username", "admin"));
@@ -76,6 +78,39 @@ public final class UndertowProcessServer implements KeycloakServer {
             stop();
             throw new IllegalStateException("Cannot start the selected Keycloak runtime; logs: " + run, failure);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String providerClasspath(KeycloakServerConfigBuilder builder) throws Exception {
+        if (builder == null) return "";
+        for (String fieldName : List.of("options", "features", "featuresDisabled")) {
+            var field = KeycloakServerConfigBuilder.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            Object value = field.get(builder);
+            boolean configured = value instanceof Map<?, ?> map ? !map.isEmpty() : !((java.util.Collection<?>) value).isEmpty();
+            if (configured) {
+                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies only; unsupported setting: " + fieldName);
+            }
+        }
+        var method = KeycloakServerConfigBuilder.class.getDeclaredMethod("toDependencies");
+        method.setAccessible(true);
+        var dependencies = (Iterable<Object>) method.invoke(builder);
+        var updater = Class.forName("org.keycloak.testframework.util.MavenProjectUtil")
+                .getMethod("updateDependencyDetails", Class.forName("org.keycloak.testframework.server.KeycloakDependency"));
+        var resolver = Class.forName("org.keycloak.it.utils.Maven").getMethod("resolveArtifact", String.class, String.class);
+        List<String> paths = new ArrayList<>();
+        for (Object dependency : dependencies) {
+            Object updated = updater.invoke(null, dependency);
+            String groupId = (String) updated.getClass().getMethod("getGroupId").invoke(updated);
+            String artifactId = (String) updated.getClass().getMethod("getArtifactId").invoke(updated);
+            if ((boolean) updated.getClass().getMethod("dependencyCurrentProject").invoke(updated)) {
+                Object module = Class.forName("org.keycloak.testframework.util.MavenProjectUtil").getMethod("getCurrentModule").invoke(null);
+                paths.add(module.getClass().getMethod("getClassesDir").invoke(module).toString());
+            } else {
+                paths.add(resolver.invoke(null, groupId, artifactId).toString());
+            }
+        }
+        return String.join(File.pathSeparator, paths);
     }
 
     private void readOutput() {

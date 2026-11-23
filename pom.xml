@@ -30,6 +30,7 @@
         <unit.java.home>${keycloak.java.home}</unit.java.home>
         <tested.keycloak.version>26.8.2</tested.keycloak.version>
         <tested.server.java>25</tested.server.java>
+        <quarkus.spi.fixture.artifact>quarkus-spi-fixture</quarkus.spi.fixture.artifact>
         <unboundid.version>7.0.5</unboundid.version>
     </properties>
     <build>
@@ -107,10 +108,27 @@
             </build>
         </profile>
         <profile>
+            <id>undertow15</id>
+            <modules>
+                <module>runtime-undertow15</module>
+                <module>extension-undertow</module>
+                <module>undertow-spi-fixture</module>
+                <module>undertow-integration-tests</module>
+            </modules>
+            <properties>
+                <keycloak.java.home>${env.JAVA11_HOME}</keycloak.java.home>
+                <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
+                <tested.keycloak.version>15.0.2</tested.keycloak.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
+                <tested.server.java>11</tested.server.java>
+            </properties>
+        </profile>
+        <profile>
             <id>keycloak20</id>
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/20</module>
+                <module>quarkus-spi-fixture-legacy</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>
@@ -118,6 +136,7 @@
                 <tested.keycloak.version>20.0.5</tested.keycloak.version>
                 <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
+                <quarkus.spi.fixture.artifact>quarkus-spi-fixture-legacy</quarkus.spi.fixture.artifact>
             </properties>
         </profile>
         <profile>
@@ -125,6 +144,7 @@
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/21</module>
+                <module>quarkus-spi-fixture-legacy</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>
@@ -132,6 +152,7 @@
                 <tested.keycloak.version>21.1.2</tested.keycloak.version>
                 <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
+                <quarkus.spi.fixture.artifact>quarkus-spi-fixture-legacy</quarkus.spi.fixture.artifact>
             </properties>
         </profile>
         <profile>
@@ -139,6 +160,7 @@
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/22</module>
+                <module>quarkus-spi-fixture</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>
@@ -146,6 +168,7 @@
                 <tested.keycloak.version>22.0.5</tested.keycloak.version>
                 <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
+                <quarkus.spi.fixture.artifact>quarkus-spi-fixture</quarkus.spi.fixture.artifact>
             </properties>
         </profile>
         <profile>
@@ -153,6 +176,7 @@
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/23</module>
+                <module>quarkus-spi-fixture</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>
@@ -160,6 +184,7 @@
                 <tested.keycloak.version>23.0.7</tested.keycloak.version>
                 <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
+                <quarkus.spi.fixture.artifact>quarkus-spi-fixture</quarkus.spi.fixture.artifact>
             </properties>
         </profile>
         <profile>
@@ -167,6 +192,7 @@
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/24</module>
+                <module>quarkus-spi-fixture</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>
@@ -174,6 +200,7 @@
                 <tested.keycloak.version>24.0.5</tested.keycloak.version>
                 <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
+                <quarkus.spi.fixture.artifact>quarkus-spi-fixture</quarkus.spi.fixture.artifact>
             </properties>
         </profile>
         <profile>
@@ -181,6 +208,7 @@
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/25</module>
+                <module>quarkus-spi-fixture</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>
@@ -188,6 +216,7 @@
                 <tested.keycloak.version>25.0.6</tested.keycloak.version>
                 <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>21</tested.server.java>
+                <quarkus.spi.fixture.artifact>quarkus-spi-fixture</quarkus.spi.fixture.artifact>
             </properties>
         </profile>
         <profile>
@@ -195,6 +224,7 @@
             <modules>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/26</module>
+                <module>quarkus-spi-fixture</module>
                 <module>quarkus-integration-tests</module>
             </modules>
             <properties>

@@ -63,7 +63,7 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      - name: Verify the selected runtime and automatic H2 reset
+      - name: Verify the selected runtime, custom SPI loading, and automatic H2 reset
         env:
           MAVEN_PROFILE: ${{ matrix.profile }}
           EXPECTED_KEYCLOAK: ${{ matrix.keycloak }}

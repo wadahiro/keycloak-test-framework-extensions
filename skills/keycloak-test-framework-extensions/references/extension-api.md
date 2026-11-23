@@ -27,8 +27,8 @@ The child Keycloak process uses `KEYCLOAK_JAVA_HOME` independently.
 
 ## Deploy a custom SPI
 
-The Quarkus bootstrap does not discover an arbitrary SPI project from its POM automatically.
-Declare the provider through the standard Framework server configuration so the extension can package it into the isolated Keycloak home before startup.
+Declare providers through the official Framework server configuration.
+Both the Quarkus and Undertow 15 adapters consume `dependency(...)` and `dependencyCurrentProject()`; each adapter makes the provider visible through its own runtime loading mechanism.
 
 When provider sources are in the integration-test module's main source set, use:
 
@@ -42,13 +42,18 @@ public final class ServerConfig implements KeycloakServerConfig {
 ```
 
 Then select it on the test class with `@KeycloakIntegrationTest(config = ServerConfig.class)`.
-The Framework's `dependencyCurrentProject()` registers the compiled module as a provider JAR.
+The Quarkus adapter packages the compiled module as a provider JAR.
+The Undertow 15 adapter adds the compiled classes directory to its isolated server JVM classpath.
 
 For a separately built SPI artifact, declare it in the server configuration with `config.dependency("groupId", "artifactId")` and make sure that artifact is resolvable from the Maven repository.
 Keep SPI development and Framework integration tests in separate Maven modules when they target different Keycloak API versions.
 
-Keycloak's `start-dev` startup builds the isolated server home with the registered provider JARs.
-Provider changes require a fresh server process; this extension uses a per-run home directory.
+The Quarkus adapter places registered provider JARs in its isolated server home before bootstrap.
+The Undertow 15 adapter resolves provider JARs into the child JVM classpath.
+Provider changes require a fresh server process.
+
+The Undertow 15 adapter consumes provider dependencies from `KeycloakServerConfigBuilder` and rejects configured server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.
+Run its integration tests with `mvn -Pundertow15 verify`, the Test Framework on JDK 25, and `KEYCLOAK_JAVA_HOME` set to JDK 11.
 
 The runtime Maven plugin generates `target/test-classes/META-INF/keycloak-test-runtime.properties`; bind `prepare` to `process-test-classes` or run it before direct IDE JUnit launches.
 See the [runtime plugin guide](../../../docs/runtime-plugin.md), [H2 snapshot guide](h2-snapshot.md), and [IDE guide](ide-testing.md).

@@ -23,9 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - keycloak: '15.0.2'
-            server_java: '11'
-            profile: ''
           - keycloak: '20.0.5'
             server_java: '17'
             profile: 'keycloak20'

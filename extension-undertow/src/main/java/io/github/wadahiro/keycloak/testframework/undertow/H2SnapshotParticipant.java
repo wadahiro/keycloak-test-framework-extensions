@@ -1,8 +1,5 @@
 package io.github.wadahiro.keycloak.testframework.undertow;
 
-/** A non-H2 state store that participates in an H2 baseline capture and restore. */
-public interface H2SnapshotParticipant {
-    void capture();
-
-    void restore();
-}
+/** @deprecated Implement the shared snapshot participant API instead. */
+@Deprecated
+public interface H2SnapshotParticipant extends io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant { }

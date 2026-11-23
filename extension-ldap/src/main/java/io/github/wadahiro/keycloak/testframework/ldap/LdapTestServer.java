@@ -4,9 +4,9 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerSnapshot;
 import com.unboundid.ldap.sdk.LDAPException;
-import io.github.wadahiro.keycloak.testframework.undertow.H2SnapshotParticipant;
+import io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant;
 
-/** A loopback-only UnboundID LDAP server that joins the Undertow H2 snapshot lifecycle. */
+/** A loopback-only UnboundID LDAP server that joins the H2 snapshot lifecycle. */
 public final class LdapTestServer implements AutoCloseable, H2SnapshotParticipant {
     private final String baseDn;
     private final String bindDn;

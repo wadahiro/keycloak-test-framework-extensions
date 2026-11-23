@@ -2,25 +2,28 @@
 
 ```mermaid
 flowchart TB
-    m[Maven on JDK 25]
-    m --> u[Existing unit tests and javac on JDK 11]
-    m --> t[Test Framework and extension on JDK 25]
-    t -->|Start with isolated Maven-resolved classpath| k[Keycloak 15–26 with Undertow and H2 on its supported JDK]
-    t -->|Admin REST and OIDC| k
-    t -->|Private stdin control| k
+    m[Maven and Test Framework on JDK 21 or 25]
+    m --> u[Existing unit tests on their configured JDK]
+    m --> t[Quarkus extension and Test Framework]
+    t -->|Maven-resolved runtime classpath in child JVM| q[Keycloak 20–26 through official Quarkus bootstrap]
+    t -->|Admin REST and OIDC| q
 ```
 
-The extension JAR targets Java 21 and contains no Keycloak server dependencies. The version adapter JAR contains only the runtime bootstrap classes. Server dependencies are resolved in the Maven plugin class realm, which writes a classpath descriptor under the integration module’s test output directory; the extension passes that classpath to the child JVM.
-Keycloak 15 has a Java 11 runtime artifact; versions 20–26 have one artifact per supported Keycloak version, with server JDKs 17, 21, or 25 as listed in the README.
-The modern variants share most runtime code and carry version-specific bootstrap configuration, servlet namespace, and compatibility adapters.
-Configure the matching runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`, not as a project test dependency. Bind the plugin goal to `process-test-classes` so Maven and Failsafe runs prepare the child JVM classpath.
-The runtime Maven plugin prepares exactly one selected runtime per integration-test module. Set `kc.test.undertow.version` when selecting among supported versions.
+The extension JAR targets Java 21 and contains no Keycloak server libraries.
+The version-specific runtime artifact contains only bootstrap classes and metadata.
+The runtime Maven plugin resolves server dependencies and writes their paths to a descriptor under the integration module's test output directory.
+The Quarkus extension starts Keycloak from Maven-resolved artifacts in a child JVM without downloading or installing a distribution ZIP.
+
+Keycloak 20–26 use the official Quarkus bootstrap, with JDK 17 for 20–24, JDK 21 for 25, and JDK 25 for 26.
+
+Configure exactly one runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`, not as a project test dependency.
+Bind the plugin goal to `process-test-classes` so Maven and Failsafe runs prepare the child JVM classpath.
+Use `kc.test.runtime.version` to check the selected Keycloak version.
 
 The GLOBAL server is shared within one Framework registry/test JVM.
-`@InjectH2Snapshot` creates a CLASS-scoped managed resource through the existing Framework supplier interface.
-It captures H2 rows after declarative resources exist and uses Framework cleanup to restore them after each method.
-A barrier coordinates synchronous HTTP requests and standard timer tasks during restore.
-The runtime evicts model caches and restores serialized baseline user/client sessions.
-Class cleanup releases the baseline before deleting that class's fixtures.
+`@InjectQuarkusH2Snapshot` creates a CLASS-scoped managed resource through the Framework supplier interface.
+It captures H2 rows after declarative resources exist and restores them after each method.
+A request barrier quiesces supported HTTP requests during restore, and Keycloak caches are cleared before the saved session entries are restored.
+LDAP fixtures implement the shared snapshot participant API so their data follows the same capture and restore lifecycle.
 
 See [H2 snapshot lifecycle and boundaries](h2-snapshot.md).

@@ -1,29 +1,26 @@
 # H2 snapshot reset
 
-Use `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-undertow:0.1.0-SNAPSHOT` with test scope in the modern integration-test module.
-Import `org.keycloak.testframework:keycloak-test-framework-bom:26.8.2` in the consumer dependency management.
-Source/local-install artifacts are not published releases until the maintainer publishes them.
+Use `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-quarkus:0.1.0-SNAPSHOT` with test scope in the integration-test module.
+Import the Keycloak Test Framework BOM that matches the selected server version.
 
-Select `kc.test.server=undertow-process` and `kc.test.keycloak=undertow-admin` in `keycloak-test.properties` or Failsafe system properties.
-For Keycloak 20–26, add the matching `keycloak-test-runtime-undertow<major>` test artifact.
-Set `KEYCLOAK_JAVA_HOME` or `kc.test.undertow.java.home` to the server JDK required by that version, preserving the JDK 25 runner and the existing unit-test JVM.
-The extension starts the selected runtime in a separate JVM.
+Select `kc.test.server=quarkus-process` and `kc.test.keycloak=quarkus-admin` in `keycloak-test.properties` or Failsafe system properties.
+Configure the matching `keycloak-test-runtime-quarkus<major>` artifact under `keycloak-test-runtime-maven-plugin` dependencies.
+Set `KEYCLOAK_JAVA_HOME` to the server JDK, preserving the JDK 25 runner and the existing unit-test JVM.
 
-Inject `@InjectH2Snapshot H2Snapshot snapshot` (both types in `io.github.wadahiro.keycloak.testframework.undertow`).
+Inject `@InjectQuarkusH2Snapshot QuarkusH2Snapshot snapshot` from `io.github.wadahiro.keycloak.testframework.quarkus`.
 Keep fixture resources CLASS/GLOBAL; METHOD resources and JUnit parallel execution are rejected.
-A baseline is automatically captured after declarative resources exist and restored by Framework cleanup after user `@AfterEach`, before the next `@BeforeEach`.
+A baseline is captured after declarative resources exist and restored after user `@AfterEach`, before the next `@BeforeEach`.
 For imperative setup, call `snapshot.capture()` at the end of a public `@TestSetup` method on a public test class.
 `capture()` replaces the class baseline; `restore()` can reset immediately within a method.
 Do not call managed-resource `dirty()` or perform schema changes while using this mode.
-Prefer direct admin operations over `WithCleanup` helpers to avoid additional per-method admin-API cleanup calls.
+Prefer direct admin operations over `WithCleanup` helpers to avoid extra per-method admin-API cleanup calls.
 
-Java classes own the database row copy, prepared-batch restore, cache handling, request/timer barrier and process lifecycle.
-The skill configures these supported mechanisms; do not implement competing restore scripts.
+Java classes own the database row copy, prepared-batch restore, cache handling, request/timer barrier, and process lifecycle.
+The skill configures these mechanisms; do not implement competing reset scripts.
 The whole disposable DB is restored, including master and unrelated realms.
-Injected extension resources implementing `H2SnapshotParticipant`, including the UnboundID LDAP fixture, capture and restore alongside the H2 baseline.
-User/client sessions present at capture are deep-copied and restored, while later sessions disappear; this preserves administrative sessions without a password grant after every reset.
-Model/revision/key caches are evicted; transient authentication-session, login-failure and action-token caches are cleared.
-Time is not rewound; external resources and arbitrary provider state are not restored unless an injected extension resource implements `H2SnapshotParticipant`.
-Wait for all asynchronous work; reset failure stops the child and requires a fresh server/test JVM.
+Injected resources implementing `H2SnapshotParticipant`, including the UnboundID LDAP fixture, capture and restore alongside the H2 baseline.
+User/client sessions present at capture are deep-copied and restored, while later sessions disappear.
+Time is not rewound; external resources and arbitrary provider state are not restored unless a managed resource implements `H2SnapshotParticipant`.
+Wait for asynchronous work to finish; reset failure stops the child and requires a fresh server/test JVM.
 
-Validate with `mvn -pl undertow-integration-tests -am verify` for the integration module and `mvn verify` for the full build.
+Validate with `mvn -Pkeycloak26 -pl quarkus-integration-tests -am verify` for the integration module.

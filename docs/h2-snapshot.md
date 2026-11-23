@@ -1,9 +1,8 @@
-# H2 snapshot reset with the Undertow extension
+# H2 snapshot reset with the Quarkus extension
 
-`keycloak-test-framework-undertow` starts the selected supported Keycloak runtime in a separate JVM and restores a shared H2 in-memory baseline after each test method.
+`keycloak-test-framework-quarkus` starts Keycloak 20–26 with the official Quarkus bootstrap in a separate JVM and restores a shared H2 in-memory baseline after each test method.
 The modern Test Framework remains unmodified and runs on JDK 25.
-Each supported Keycloak version has a small runtime adapter artifact. The extension and adapter JARs do not bundle Keycloak server libraries; the runtime Maven plugin resolves those libraries outside the JUnit classpath.
-The runtime uses Undertow and local JPA transactions.
+Each supported Keycloak version has a small runtime artifact. The extension and runtime JARs do not bundle Keycloak server libraries; the runtime Maven plugin resolves those libraries outside the JUnit classpath.
 
 ## Consumer setup
 
@@ -25,7 +24,7 @@ Import the Framework BOM in that consumer module to align its transitive depende
 <dependencies>
     <dependency>
         <groupId>io.github.wadahiro.keycloak.testframework</groupId>
-        <artifactId>keycloak-test-framework-undertow</artifactId>
+        <artifactId>keycloak-test-framework-quarkus</artifactId>
         <version>0.1.0-SNAPSHOT</version>
         <scope>test</scope>
     </dependency>
@@ -35,17 +34,17 @@ Import the Framework BOM in that consumer module to align its transitive depende
 Select the suppliers with Maven Failsafe `systemPropertyVariables` or equivalent system properties:
 
 ```xml
-<kc.test.server>undertow-process</kc.test.server>
-<kc.test.keycloak>undertow-admin</kc.test.keycloak>
+<kc.test.server>quarkus-process</kc.test.server>
+<kc.test.keycloak>quarkus-admin</kc.test.keycloak>
 ```
 
-Set `KEYCLOAK_JAVA_HOME` to the JDK required by the selected version: 11 for 15.0.2, 17 for 20–24, 21 for 25, or 25 for 26.
-Configure the selected runtime adapter as a dependency of `keycloak-test-runtime-maven-plugin`; see [runtime setup](runtime-plugin.md). Use one runtime per integration-test module, and keep `kc.test.undertow.version` aligned with it when that property is set.
-`kc.test.undertow.work` optionally selects the directory retaining child process logs and run files. Maven keeps the resolved server libraries in the local repository.
-`kc.test.undertow.admin.username` and `.admin.password` default to `admin`.
-The server has GLOBAL lifecycle within one Framework registry/test JVM.
+Set `KEYCLOAK_JAVA_HOME` to the JDK required by the selected version: 17 for 20–24, 21 for 25, or 25 for 26.
+Configure the selected runtime adapter as a dependency of `keycloak-test-runtime-maven-plugin`; see [runtime setup](runtime-plugin.md). Use one runtime per integration-test module, and keep `kc.test.runtime.version` aligned with it when that property is set.
+`kc.test.quarkus.work` optionally selects the directory retaining child process logs and run files. Maven keeps the resolved server libraries in the local repository.
+`kc.test.quarkus.admin.username` and `.admin.password` default to `admin`.
+The Quarkus server has GLOBAL lifecycle within one Framework registry/test JVM.
 Multiple Maven forks have independent servers and databases.
-See the [integration module](../undertow-integration-tests/pom.xml) for the complete Failsafe logging configuration.
+See the [integration module](../quarkus-integration-tests/pom.xml) for the complete Failsafe logging configuration.
 
 ```java
 @KeycloakIntegrationTest
@@ -53,8 +52,8 @@ public class ExampleIT {
     @InjectRealm(lifecycle = LifeCycle.CLASS, config = Fixture.class)
     ManagedRealm realm;
 
-    @InjectH2Snapshot
-    H2Snapshot snapshot;
+    @InjectQuarkusH2Snapshot
+    QuarkusH2Snapshot snapshot;
 
     public static class Fixture implements RealmConfig {
         @Override
@@ -73,12 +72,12 @@ public class ExampleIT {
 }
 ```
 
-The custom annotation and handle are in `io.github.wadahiro.keycloak.testframework.undertow`.
+The Quarkus annotation and handle are in `io.github.wadahiro.keycloak.testframework.quarkus`.
 Other types are the standard Framework/JUnit types; no extra JUnit extension registration is needed.
 
 ## Lifecycle and explicit operations
 
-The snapshot supplier uses the Framework's `Supplier.onBeforeEach` and `ManagedTestResource.runCleanup` hooks.
+The Quarkus snapshot supplier uses the Framework's `Supplier.onBeforeEach` and `ManagedTestResource.runCleanup` hooks.
 On the first method it captures all declarative fixtures after resources are created, before user setup methods.
 After the test and user `@AfterEach`, normal Framework cleanup runs, then the snapshot restores the database and caches.
 The next user `@BeforeEach` therefore sees the original baseline.
@@ -103,7 +102,7 @@ The public handle is owned and closed by the Framework.
 
 ## What is restored
 
-The selected runtime captures detached JDBC rows and restores them with prepared batches into the existing H2 schema.
+The selected Quarkus runtime captures detached JDBC rows and restores them with prepared batches into the existing H2 schema.
 It truncates all PUBLIC tables with referential integrity temporarily disabled, re-inserts the baseline and restores sequence next-values, including generated identity sequences.
 User/client/realm IDs stay stable; credentials, roles and other baseline table contents are restored as data.
 This is a logical copy, whose cost grows with fixture size, not a native H2 copy-on-write snapshot.
@@ -131,22 +130,21 @@ Child EOF/shutdown handling also closes Keycloak when the test process exits.
 - Use CLASS/GLOBAL resources; METHOD-scoped injected resources are rejected before capture.
   Do not call `dirty()` on managed resources while using a baseline: recreation conflicts with stable restored IDs.
 - JUnit parallel execution is rejected; asynchronous requests/jobs must finish before a method returns.
-  The barrier covers the runtime's HTTP and standard timer paths, not arbitrary external asynchronous providers.
+  Keycloak 23–26 use an HTTP request barrier, while 20–22 have no HTTP barrier.
+  The Keycloak timer barrier is available on 26 only; scheduled work on 20–25 must be idle during restore.
 - The entire server DB is restored, including master and unrelated realms on this disposable server.
   Do not share this server with other test runners or applications.
-- Admin Console and Account Console frontend assets are omitted from the packaged server runtime; exercise the server through its APIs and login pages.
 - Keep the schema fixed; metadata changes such as table/column/index/foreign-key changes fail reset.
   Arbitrary DDL and non-PUBLIC tables are not supported workloads.
 - External stores, files, emails, custom provider state, JVM system properties and arbitrary factory caches are not snapshotted unless an injected resource implements `H2SnapshotParticipant`.
-  Modern `KeycloakServerConfig`, provider hot deployment, custom runtime classpaths and TLS are not implemented by this backend.
+  The Quarkus integration path supports Keycloak server configuration and TLS.
+  Runtime provider artifacts are resolved from the Test Framework server configuration; provider hot deployment is not supported after startup.
 
 ## Build and verification
 
 ```sh
-mvn -pl undertow-integration-tests -am verify
+mvn -Pkeycloak26 -pl quarkus-integration-tests -am verify
 ```
 
-The runtime unit tests check large CLOB/BLOB values, nulls, foreign keys, identity/sequence replay, schema-change rejection, uncommitted transactions and the request barrier.
-Host guard tests reject parallel execution, unsupported backends and METHOD-scoped resources.
-Integration tests verify stable IDs, restore timing relative to user setup/teardown, credentials, transient/baseline sessions, refresh tokens, whole-DB master-realm reset, cross-class cleanup/reuse, wrong-JDK rejection and child termination after a control failure.
-The modern test JVM also verifies that server runtime classes are absent from its own classpath.
+The Quarkus integration tests verify child JVM startup, the selected server version and JDK, shared realm management, H2 restore, and Keycloak cache refresh.
+The full version matrix is configured in GitHub Actions.

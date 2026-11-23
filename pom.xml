@@ -14,14 +14,13 @@
         </license>
     </licenses>
     <modules>
-        <module>runtime-undertow15</module>
-        <module>extension-undertow</module>
+        <module>extension-snapshot</module>
+        <module>extension-quarkus</module>
         <module>extension-saml</module>
         <module>extension-broker</module>
         <module>extension-ldap</module>
         <module>examples/java11-unit-tests</module>
         <module>runtime-classpath-maven-plugin</module>
-        <module>undertow-integration-tests</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,10 +28,9 @@
         <framework.version>26.8.2</framework.version>
         <keycloak.java.home>${env.KEYCLOAK_JAVA_HOME}</keycloak.java.home>
         <unit.java.home>${keycloak.java.home}</unit.java.home>
-        <tested.keycloak.version>15.0.2</tested.keycloak.version>
-        <tested.server.java>11</tested.server.java>
+        <tested.keycloak.version>26.8.2</tested.keycloak.version>
+        <tested.server.java>25</tested.server.java>
         <unboundid.version>7.0.5</unboundid.version>
-        <kc.test.undertow.version>${tested.keycloak.version}</kc.test.undertow.version>
     </properties>
     <build>
         <pluginManagement>
@@ -111,105 +109,112 @@
         <profile>
             <id>keycloak20</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/20</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/20</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>20.0.5</tested.keycloak.version>
-                <kc.test.undertow.version>20.0.5</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>keycloak21</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/21</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/21</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>21.1.2</tested.keycloak.version>
-                <kc.test.undertow.version>21.1.2</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>keycloak22</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/22</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/22</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>22.0.5</tested.keycloak.version>
-                <kc.test.undertow.version>22.0.5</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>keycloak23</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/23</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/23</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>23.0.7</tested.keycloak.version>
-                <kc.test.undertow.version>23.0.7</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>keycloak24</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/24</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/24</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>24.0.5</tested.keycloak.version>
-                <kc.test.undertow.version>24.0.5</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>17</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>keycloak25</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/25</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/25</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>25.0.6</tested.keycloak.version>
-                <kc.test.undertow.version>25.0.6</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>21</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>keycloak26</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/26</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/26</module>
+                <module>quarkus-integration-tests</module>
             </modules>
             <properties>
                 <unit.java.home>${env.JAVA11_HOME}</unit.java.home>
                 <tested.keycloak.version>26.8.2</tested.keycloak.version>
-                <kc.test.undertow.version>26.8.2</kc.test.undertow.version>
+                <kc.test.runtime.version>${tested.keycloak.version}</kc.test.runtime.version>
                 <tested.server.java>25</tested.server.java>
             </properties>
         </profile>
         <profile>
             <id>all-runtimes</id>
             <modules>
-                <module>runtime-modern</module>
-                <module>runtime-modern/20</module>
-                <module>runtime-modern/21</module>
-                <module>runtime-modern/22</module>
-                <module>runtime-modern/23</module>
-                <module>runtime-modern/24</module>
-                <module>runtime-modern/25</module>
-                <module>runtime-modern/26</module>
+                <module>runtime-quarkus</module>
+                <module>runtime-quarkus/20</module>
+                <module>runtime-quarkus/21</module>
+                <module>runtime-quarkus/22</module>
+                <module>runtime-quarkus/23</module>
+                <module>runtime-quarkus/24</module>
+                <module>runtime-quarkus/25</module>
+                <module>runtime-quarkus/26</module>
             </modules>
         </profile>
     </profiles>

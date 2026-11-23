@@ -1,9 +1,0 @@
-Keycloak Test Framework Extensions
-Copyright 2026 wadahiro and contributors
-
-This project integrates with Keycloak (Apache License 2.0).
-Keycloak is a trademark of its respective owners.
-This is an independent community extension, not an official Keycloak project.
-
-The Undertow runtime adapts Keycloak 15 test/runtime integration code.
-Original Red Hat/contributor notices are preserved in the adapted source.

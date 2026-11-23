@@ -18,8 +18,8 @@ Determine the production/server JDK, the existing unit-test JDK, and the integra
 Preserve the application's current Java target and unit-test runtime.
 
 This extension uses an unmodified modern Keycloak Test Framework in the runner JVM.
-It starts Maven-resolved Keycloak classes with Undertow in a separate process.
-Supported server runtimes are Keycloak 15.0.2 on Java 11; 20.0.5, 21.1.2, 22.0.5, 23.0.7 and 24.0.5 on Java 17; 25.0.6 on Java 21; and 26.8.2 on Java 25.
+It starts Maven-resolved Keycloak classes with the official Quarkus bootstrap in a separate process.
+Supported server runtimes are Keycloak 20.0.5, 21.1.2, 22.0.5, 23.0.7 and 24.0.5 on Java 17; 25.0.6 on Java 21; and 26.8.2 on Java 25.
 JDK 25 is the preferred runner; the extension bytecode targets Java 21.
 Do not describe this as same-JVM embedded execution.
 

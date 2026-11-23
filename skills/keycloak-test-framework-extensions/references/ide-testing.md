@@ -7,8 +7,8 @@ Keep the extension in project test scope and configure one matching runtime arti
 Run `process-test-classes` before direct JUnit launches to generate the descriptor; runtime libraries stay outside the test classpath.
 
 Configure the IDE's JUnit process to use JDK 25.
-Set `KEYCLOAK_JAVA_HOME` in the JUnit launch environment to the server JDK: 11 for Keycloak 15.0.2, 17 for 20–24, 21 for 25, or 25 for 26.
-Configure exactly one runtime artifact per integration-test module. The optional `kc.test.undertow.version` test property must match that artifact.
+Set `KEYCLOAK_JAVA_HOME` in the JUnit launch environment to the server JDK: 17 for Keycloak 20–24, 21 for 25, or 25 for 26.
+Configure exactly one Quarkus runtime artifact per integration-test module and keep `kc.test.runtime.version` aligned with it.
 The `kc.test.server` and `kc.test.keycloak` selections belong in `src/test/resources/keycloak-test.properties` as usual.
 
 Keep legacy Java 11 unit tests in their existing module and run configuration.

@@ -46,7 +46,7 @@ public final class PrepareRuntimeMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.testOutputDirectory}", required = true)
     private File testOutputDirectory;
 
-    @Parameter(property = "kc.test.undertow.version")
+    @Parameter(property = "kc.test.runtime.version")
     private String requestedVersion;
 
     @Override
@@ -78,10 +78,10 @@ public final class PrepareRuntimeMojo extends AbstractMojo {
                 }
             }
             if (runtime == null) {
-                throw new MojoExecutionException("The configured runtime dependency has no " + DESCRIPTOR + " metadata. Use a supported keycloak-test-runtime-undertow<major> artifact.");
+                throw new MojoExecutionException("The configured runtime dependency has no " + DESCRIPTOR + " metadata. Use a supported keycloak-test-runtime-quarkus<major> artifact.");
             }
             if (requestedVersion != null && !requestedVersion.equals(runtime.getProperty("version"))) {
-                throw new MojoExecutionException("Configured runtime " + runtime.getProperty("version") + " does not match kc.test.undertow.version=" + requestedVersion + ". Select the matching plugin dependency.");
+                throw new MojoExecutionException("Configured runtime " + runtime.getProperty("version") + " does not match kc.test.runtime.version=" + requestedVersion + ". Select the matching plugin dependency.");
             }
             jars.remove(runtimeJar);
             jars.add(0, runtimeJar);
@@ -106,13 +106,13 @@ public final class PrepareRuntimeMojo extends AbstractMojo {
         for (Plugin plugin : buildPlugins) {
             if (!PLUGIN_ARTIFACT_ID.equals(plugin.getArtifactId())) continue;
             for (Dependency dependency : plugin.getDependencies()) {
-                if (dependency.getArtifactId() != null && dependency.getArtifactId().startsWith("keycloak-test-runtime-undertow")) {
+                if (dependency.getArtifactId() != null && dependency.getArtifactId().startsWith("keycloak-test-runtime-quarkus")) {
                     matches.add(dependency);
                 }
             }
         }
         if (matches.size() != 1) {
-            throw new MojoExecutionException("Configure exactly one keycloak-test-runtime-undertow<major> artifact as a dependency of keycloak-test-runtime-maven-plugin.");
+            throw new MojoExecutionException("Configure exactly one keycloak-test-runtime-quarkus<major> artifact as a dependency of keycloak-test-runtime-maven-plugin.");
         }
         Dependency dependency = matches.get(0);
         if (dependency.getVersion() == null || dependency.getVersion().contains("${")) {

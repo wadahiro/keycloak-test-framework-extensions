@@ -6,7 +6,7 @@ It is not a replacement for interoperability tests against Active Directory or a
 
 ## Add the test dependency
 
-Add this artifact to the integration-test module, alongside `keycloak-test-framework-undertow`:
+Add this artifact to the integration-test module, alongside `keycloak-test-framework-quarkus`:
 
 ```xml
 <dependency>
@@ -34,8 +34,8 @@ public class LdapLoginIT {
     @InjectLdapTestServer
     LdapTestServer ldap;
 
-    @InjectH2Snapshot
-    H2Snapshot snapshot;
+    @InjectQuarkusH2Snapshot
+    QuarkusH2Snapshot snapshot;
 
     @TestSetup
     public void configureDirectoryAndFederation() throws Exception {
@@ -63,12 +63,12 @@ public class LdapLoginIT {
 }
 ```
 
-The complete working configuration and login assertions are in [`LdapFederationIT`](../undertow-integration-tests/src/test/java/io/github/wadahiro/keycloak/undertow/LdapFederationIT.java).
+The complete working configuration and login assertions are in [`LdapFederationIT`](../quarkus-integration-tests/src/test/java/io/github/wadahiro/keycloak/testframework/quarkus/LdapFederationIT.java).
 The example uses an LDAP user-attribute mapper to expose `departmentNumber` as the local `department` attribute, then authenticates the user through a real browser login.
 
 ## Coordinated state reset
 
-`LdapTestServer` participates in `H2Snapshot` automatically.
+`LdapTestServer` participates in `QuarkusH2Snapshot` automatically.
 The first baseline includes the LDAP directory data; `snapshot.capture()` replaces both the directory and H2 baselines after imperative setup.
 After each test method, the LDAP snapshot is restored before Keycloak's H2 restore clears Keycloak caches.
 This keeps external LDAP entries, the LDAP provider and mapper configuration, and imported local users on the same baseline.

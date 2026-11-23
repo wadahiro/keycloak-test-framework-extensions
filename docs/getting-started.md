@@ -1,17 +1,16 @@
 # Getting started
 
-Use a separate integration-test module so its JDK and dependencies do not change the existing unit-test setup. The example below uses Keycloak 26.8.2; choose the runtime adapter that matches your Keycloak version.
+Use a separate integration-test module so its JDK and dependencies do not change the existing unit-test setup. The example below uses Keycloak 26.8.2; choose the runtime artifact and extension that match your Keycloak version.
 
 ## Supported versions
 
-| Keycloak | Server JDK | Runtime adapter |
+| Keycloak | Server JDK | Runtime artifact |
 | --- | --- | --- |
-| 15.0.2 | 11 | `keycloak-test-runtime-undertow15` |
-| 20.0.5, 21.1.2, 22.0.5, 23.0.7, 24.0.5 | 17 | `keycloak-test-runtime-undertow<major>` |
-| 25.0.6 | 21 | `keycloak-test-runtime-undertow25` |
-| 26.8.2 | 25 | `keycloak-test-runtime-undertow26` |
+| 20.0.5, 21.1.2, 22.0.5, 23.0.7, 24.0.5 | 17 | `keycloak-test-runtime-quarkus<major>` |
+| 25.0.6 | 21 | `keycloak-test-runtime-quarkus25` |
+| 26.8.2 | 25 | `keycloak-test-runtime-quarkus26` |
 
-The Maven integration-test runner and Keycloak Test Framework use JDK 25. The server starts in a child JVM selected by `KEYCLOAK_JAVA_HOME`, so the server can use its supported JDK independently.
+The Quarkus extension targets Keycloak 20–26. The example Maven integration-test runner and Keycloak Test Framework use JDK 25. The server starts in a child JVM selected by `KEYCLOAK_JAVA_HOME`, so the server can use its supported JDK independently.
 
 ## Configure Maven
 
@@ -32,7 +31,7 @@ Add the extension as a test dependency and configure the runtime adapter under t
 ```xml
 <dependency>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
-    <artifactId>keycloak-test-framework-undertow</artifactId>
+    <artifactId>keycloak-test-framework-quarkus</artifactId>
     <version>0.1.0</version>
     <scope>test</scope>
 </dependency>
@@ -104,7 +103,7 @@ In the build's `<plugins>` section, add:
     <dependencies>
         <dependency>
             <groupId>io.github.wadahiro.keycloak.testframework</groupId>
-            <artifactId>keycloak-test-runtime-undertow26</artifactId>
+            <artifactId>keycloak-test-runtime-quarkus26</artifactId>
             <version>0.1.0</version>
         </dependency>
     </dependencies>
@@ -115,14 +114,14 @@ The plugin resolves Keycloak server dependencies in its isolated Maven class rea
 
 ## Run a test
 
-Set the child server JDK and select the matching runtime in `src/test/resources/keycloak-test.properties`:
+Set the child server JDK and select the Quarkus suppliers in `src/test/resources/keycloak-test.properties`:
 
 ```properties
-kc.test.server=undertow-process
-kc.test.keycloak=undertow-admin
-kc.test.undertow.version=26
+kc.test.server=quarkus-process
+kc.test.keycloak=quarkus-admin
+kc.test.quarkus.version=26.8.2
 ```
 
-For Keycloak 26, point `KEYCLOAK_JAVA_HOME` to JDK 25, then run the integration-test module with `mvn verify`. Use the JDK listed in the table for other Keycloak versions. The runtime adapter configured in Maven must match `kc.test.undertow.version`.
+For Keycloak 26, point `KEYCLOAK_JAVA_HOME` to JDK 25, then run the integration-test module with `mvn verify`. Use the JDK listed in the table for other Keycloak versions. The runtime artifact configured in Maven must match `kc.test.quarkus.version`.
 
 For test fixture setup and database snapshot behavior, see [H2 snapshot lifecycle](h2-snapshot.md).

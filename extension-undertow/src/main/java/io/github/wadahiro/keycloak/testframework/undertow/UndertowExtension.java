@@ -59,7 +59,7 @@ public final class UndertowExtension implements TestFrameworkExtension {
                     throw new IllegalArgumentException("H2 reset requires CLASS/GLOBAL resources; METHOD resource: "
                             + resource.getRequestedValueType().getSimpleName());
                 }
-                if (resource.getValue() instanceof H2SnapshotParticipant participant) {
+                if (resource.getValue() instanceof io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant participant) {
                     context.getValue().addParticipant(participant);
                 }
                 // Release/restore before the Framework deletes any class-owned fixture.

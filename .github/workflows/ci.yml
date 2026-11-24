@@ -16,9 +16,33 @@ jobs:
       - uses: actions/checkout@v5
       - run: bash scripts/tests/release.sh
 
+  maven-cache:
+    name: Prime Maven dependency cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        id: setup-java
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: |
+            **/pom.xml
+            .github/maven-cache-key
+      - name: Resolve dependencies for every Keycloak profile
+        if: steps.setup-java.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          for profile in undertow15 keycloak20 keycloak21 keycloak22 keycloak23 keycloak24 keycloak25 keycloak26; do
+            echo "Priming Maven cache for $profile"
+            mvn -B -P"$profile" dependency:go-offline
+          done
+
   test:
     name: Keycloak ${{ matrix.keycloak }} / server JDK ${{ matrix.server_java }}
     runs-on: ubuntu-latest
+    needs: maven-cache
     strategy:
       fail-fast: false
       matrix:
@@ -66,6 +90,9 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
+          cache-dependency-path: |
+            **/pom.xml
+            .github/maven-cache-key
       - name: Verify the selected runtime and integration tests
         env:
           MAVEN_PROFILE: ${{ matrix.profile }}

@@ -1,3 +1,10 @@
+## [0.4.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.3.0...v0.4.0) (2026-11-24)
+
+### Features
+
+* **auth:** unify interactive browser flow API ([24ccf0b](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/24ccf0b1140869f359ae58027f7c03827d6b52e8))
+* **bom:** manage extension versions and default suppliers ([6da7077](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/6da7077cbff3042e498e0fdc3016aeaf4dfda8c3))
+
 ## [0.3.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.2.0...v0.3.0) (2026-11-24)
 
 ### Features

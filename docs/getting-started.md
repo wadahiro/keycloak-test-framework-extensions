@@ -1,6 +1,8 @@
 # Getting started
 
-Use a separate integration-test module so its JDK and dependencies do not change the existing unit-test setup. The example below uses Keycloak 26.8.2; choose the runtime artifact and extension that match your Keycloak version.
+Choose a supported Keycloak release to match the deployment you want to validate, then use its matching runtime artifact. The server starts in a child JVM from Maven-resolved libraries, so there is no ZIP installation or container to manage.
+Keep integration tests in a separate Maven module so their dependencies do not conflict with application code or existing unit tests.
+This example targets Keycloak 24.0.5 while using the latest Keycloak Test Framework BOM (26.8.2); the Framework version and server version are selected independently.
 
 ## Supported versions
 
@@ -11,7 +13,7 @@ Use a separate integration-test module so its JDK and dependencies do not change
 | 25.0.6 | 21 | `keycloak-test-framework-quarkus` | `keycloak-test-runtime-quarkus25` |
 | 26.8.2 | 25 | `keycloak-test-framework-quarkus` | `keycloak-test-runtime-quarkus26` |
 
-The Undertow adapter targets Keycloak 15.0.2; the Quarkus adapter targets Keycloak 20–26. The Maven integration-test runner and Keycloak Test Framework use JDK 25. The server starts in a child JVM selected by the adapter's Java-home setting, so the server can use its supported JDK independently.
+The Undertow adapter targets Keycloak 15.0.2; the Quarkus adapter targets Keycloak 20–26. The Maven integration-test runner and Keycloak Test Framework use JDK 25. The server starts in a child JVM selected by the adapter's Java-home setting, so it can use the JDK supported by its Keycloak release.
 
 ## Configure Maven
 
@@ -27,13 +29,13 @@ Add the repository to the integration-test module's `pom.xml`. Releases are publ
 </repositories>
 ```
 
-Add the matching adapter as a test dependency and configure its runtime under the runtime Maven plugin's dependencies. Use `keycloak-test-framework-undertow` with `keycloak-test-runtime-undertow15` for Keycloak 15.0.2; use `keycloak-test-framework-quarkus` with the matching Quarkus runtime for Keycloak 20–26.
+Add the matching adapter as a test dependency and configure its runtime under the runtime Maven plugin's dependencies. This example uses `keycloak-test-framework-quarkus` with `keycloak-test-runtime-quarkus24`; for another supported Keycloak release, choose its matching Quarkus runtime. For Keycloak 15.0.2, use `keycloak-test-framework-undertow` with `keycloak-test-runtime-undertow15`.
 
 ```xml
 <dependency>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-quarkus</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -44,7 +46,7 @@ For LDAP User Federation and LDAP mapper tests, add the in-memory directory help
 <dependency>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-ldap</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -69,7 +71,7 @@ The Framework's OAuth module provides `@InjectOAuthClient`. For SAML browser-flo
 <dependency>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-saml</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -80,7 +82,7 @@ For tests where Keycloak brokers authentication to an external OIDC or SAML prov
 <dependency>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-broker</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -93,7 +95,7 @@ In the build's `<plugins>` section, add:
 <plugin>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-runtime-maven-plugin</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <executions>
         <execution>
             <id>prepare-keycloak-runtime</id>
@@ -104,14 +106,14 @@ In the build's `<plugins>` section, add:
     <dependencies>
         <dependency>
             <groupId>io.github.wadahiro.keycloak.testframework</groupId>
-            <artifactId>keycloak-test-runtime-quarkus26</artifactId>
-            <version>0.1.0</version>
+            <artifactId>keycloak-test-runtime-quarkus24</artifactId>
+            <version>0.2.0</version>
         </dependency>
     </dependencies>
 </plugin>
 ```
 
-Replace the Quarkus runtime in this example with `keycloak-test-runtime-undertow15` for Keycloak 15.0.2.
+Choose the runtime artifact that matches your target Keycloak release: this example uses `keycloak-test-runtime-quarkus24` for Keycloak 24.0.5.
 The plugin resolves Keycloak server dependencies in its isolated Maven class realm, keeping them out of the test and IDE classpaths. More details, including direct IDE launches, are in [runtime plugin setup](runtime-plugin.md).
 
 ## Run a test
@@ -121,11 +123,11 @@ Set the child server JDK and select the server adapter's suppliers in `src/test/
 ```properties
 kc.test.server=quarkus-process
 kc.test.keycloak=quarkus-admin
-kc.test.quarkus.version=26.8.2
+kc.test.quarkus.version=24.0.5
 ```
 
 For Keycloak 15.0.2, use `kc.test.server=undertow-process`, `kc.test.keycloak=undertow-admin`, and set `kc.test.undertow.java.home` to the JDK 11 home.
-For Keycloak 26, point `KEYCLOAK_JAVA_HOME` to JDK 25, then run the integration-test module with `mvn verify`.
-Use the JDK listed in the table for other Keycloak versions, and make sure the runtime artifact configured in Maven matches the selected version.
+For Keycloak 24.0.5, point `KEYCLOAK_JAVA_HOME` to JDK 17, then run the integration-test module with `mvn verify`.
+Use the JDK listed in the table for other Keycloak versions, and make sure the runtime artifact configured in Maven matches the selected server version.
 
 For test fixture setup and state snapshot behavior, see [snapshot lifecycle](snapshot.md).

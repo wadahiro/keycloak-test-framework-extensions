@@ -1,3 +1,14 @@
+## [0.3.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.2.0...v0.3.0) (2026-11-24)
+
+### Features
+
+* **snapshot:** add class-level state reset annotation ([87bf1fb](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/87bf1fb9c0f7ce202904b628428839db849b62f0))
+* **snapshot:** unify snapshot API across runtimes ([b501916](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/b5019166f081c4e44bb9c1fea9ad1abdee3bc77e))
+
+### Bug Fixes
+
+* **snapshot:** reject global stateful resources ([9e4df9d](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/9e4df9dfc6cb2184e892bdd2833f8776f42784e1))
+
 ## [0.2.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.1.0...v0.2.0) (2026-11-24)
 
 ### ⚠ BREAKING CHANGES

@@ -36,8 +36,11 @@ jobs:
         run: |
           for profile in undertow15 keycloak20 keycloak21 keycloak22 keycloak23 keycloak24 keycloak25 keycloak26; do
             echo "Priming Maven cache for $profile"
-            mvn -B -P"$profile" dependency:go-offline
+            mvn -B -P"$profile" dependency:go-offline dependency:resolve-plugins
           done
+          echo "Priming the dynamically selected JUnit Platform provider"
+          mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+            -Dartifact=org.apache.maven.surefire:surefire-junit-platform:3.5.4
 
   test:
     name: Keycloak ${{ matrix.keycloak }} / server JDK ${{ matrix.server_java }}

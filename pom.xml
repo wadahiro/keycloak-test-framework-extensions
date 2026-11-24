@@ -17,6 +17,8 @@
         <module>bom</module>
         <module>extension-snapshot</module>
         <module>extension-quarkus</module>
+        <module>extension-auth-api</module>
+        <module>extension-auth-oidc</module>
         <module>extension-saml</module>
         <module>extension-broker</module>
         <module>extension-ldap</module>

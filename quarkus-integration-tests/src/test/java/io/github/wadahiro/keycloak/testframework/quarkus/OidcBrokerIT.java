@@ -18,6 +18,7 @@ import org.keycloak.testframework.ui.page.LoginUpdateProfilePage;
 import org.keycloak.testframework.ui.page.LoginPage;
 import org.keycloak.testframework.ui.webdriver.ManagedWebDriver;
 
+import io.github.wadahiro.keycloak.testframework.auth.OidcAuthentication;
 import io.github.wadahiro.keycloak.testframework.broker.BrokerIdentityLinks;
 import io.github.wadahiro.keycloak.testframework.broker.InjectOidcTestIdentityProvider;
 import io.github.wadahiro.keycloak.testframework.broker.OidcIdentity;
@@ -76,17 +77,17 @@ public class OidcBrokerIT {
                 .claim("email_verified", true)
                 .claim("department", "engineering"));
 
-        app.openLoginForm();
+        var flow = new OidcAuthentication(app, browser).startLogin();
         BrowserPageAssertions.waitForLoginForm(browser);
         assertTrue(!browser.cookies().getAll().isEmpty(), "Keycloak login did not establish browser cookies");
         loginPage.clickSocial(IDP_ALIAS);
         completeProfileReviewIfRequired();
         completeProfileRequiredActionIfPresent();
 
-        var authorization = app.parseLoginResponse();
-        assertTrue(authorization.isRedirected(), "Current URL: " + browser.getCurrentUrl() + "\n"
+        var authorization = flow.awaitAuthorizationResponse();
+        assertTrue(authorization.redirected(), "Current URL: " + browser.getCurrentUrl() + "\n"
                 + browser.driver().getPageSource());
-        var tokens = app.doAccessTokenRequest(authorization.getCode());
+        var tokens = app.doAccessTokenRequest(authorization.code());
         assertTrue(tokens.isSuccess(), tokens.getErrorDescription());
         var userInfo = app.doUserInfoRequest(tokens.getAccessToken());
         assertTrue(userInfo.isSuccess());

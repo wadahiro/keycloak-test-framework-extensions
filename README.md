@@ -23,4 +23,3 @@ Then follow the [Getting Started guide](docs/getting-started.md) to choose a Key
 Further guides cover [OIDC and SAML browser login](docs/client-login-examples.md), [identity brokering](docs/broker-testing-design.md), [custom SPI testing](docs/custom-spi-testing.md), [LDAP federation](docs/ldap-testing.md), [state reset](docs/snapshot.md), and [IDE test execution](docs/ide-testing.md).
 
 Apache-2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
-This independent community extension was developed with assistance from OpenAI Codex.

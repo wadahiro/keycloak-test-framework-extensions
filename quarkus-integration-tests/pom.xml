@@ -10,6 +10,7 @@
     <dependency><groupId>org.keycloak.testframework</groupId><artifactId>keycloak-test-framework-core</artifactId><scope>test</scope></dependency>
     <dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-ldap</artifactId><version>${project.version}</version><scope>test</scope></dependency>
     <dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-saml</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+    <dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-auth-oidc</artifactId><version>${project.version}</version><scope>test</scope></dependency>
     <dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-broker</artifactId><version>${project.version}</version><scope>test</scope></dependency>
     <dependency><groupId>org.keycloak.testframework</groupId><artifactId>keycloak-test-framework-oauth</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.keycloak</groupId><artifactId>keycloak-admin-client</artifactId><scope>test</scope></dependency>

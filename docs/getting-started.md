@@ -88,7 +88,17 @@ The extensions BOM also manages Keycloak Test Framework modules. For OIDC browse
 </dependency>
 ```
 
-The Framework's OAuth module provides `@InjectOAuthClient`. For SAML browser-flow tests, add this repository's SAML helper as a test dependency:
+The Framework's OAuth module provides `@InjectOAuthClient`. To use the shared browser journey API for OIDC, add this repository's auth helper as a test dependency:
+
+```xml
+<dependency>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+    <artifactId>keycloak-test-framework-auth-oidc</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+For SAML browser-flow tests, add this repository's SAML helper as a test dependency. It includes the shared auth API transitively:
 
 ```xml
 <dependency>

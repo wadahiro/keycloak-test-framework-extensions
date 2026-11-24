@@ -14,6 +14,7 @@ import com.onelogin.saml2.authn.AuthnRequest;
 import com.onelogin.saml2.authn.SamlResponse;
 import com.onelogin.saml2.settings.Saml2Settings;
 import com.onelogin.saml2.settings.SettingsBuilder;
+import io.github.wadahiro.keycloak.testframework.auth.InteractiveAuthenticationFlow;
 import org.keycloak.testframework.realm.ManagedClient;
 import org.keycloak.testframework.ui.page.LoginPage;
 import org.keycloak.testframework.ui.webdriver.ManagedWebDriver;
@@ -138,7 +139,7 @@ public final class SamlClient implements AutoCloseable {
         acs.close();
     }
 
-    public final class SamlLoginFlow {
+    public final class SamlLoginFlow implements InteractiveAuthenticationFlow {
         private final String requestId;
         private final String relayState;
         private final CompletableFuture<String> response;
@@ -156,6 +157,7 @@ public final class SamlClient implements AutoCloseable {
          * Returns the Framework-managed browser used to start this login.
          * Use it to drive custom authenticators, required actions, and other interactive steps.
          */
+        @Override
         public ManagedWebDriver browser() {
             return browser;
         }

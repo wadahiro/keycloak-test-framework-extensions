@@ -29,7 +29,7 @@ The test IdP is separate from the app-facing test client:
 
 | Role | OIDC | SAML |
 | --- | --- | --- |
-| Start login to Keycloak under test | Framework `OAuthClient` | Extension `SamlClient` |
+| Start login to Keycloak under test | Framework `OAuthClient`, optionally through `OidcAuthentication` | Extension `SamlClient` |
 | Simulate the external IdP | `OidcTestIdentityProvider` | `SamlTestIdentityProvider` |
 | Complete and inspect the app-facing response | Framework OIDC token/user-info helpers | Extension's validated SAML ACS result |
 
@@ -56,7 +56,9 @@ Before starting a login, the test selects the next external identity, for exampl
 
 Create and configure the identity provider in the managed realm using the Framework's `IdentityProviderBuilder` and Admin API. Set the alias, mapper configuration, `firstBrokerLoginFlowAlias`, and `postBrokerLoginFlowAlias` explicitly. The IdP fixture contributes protocol endpoint and key settings; register created provider and mapper resources for cleanup with the managed realm.
 
-The app-facing browser flow remains interactive. Use `oauth.loginForm().open()` or `saml.startLogin()`, then drive every expected Keycloak screen with Framework page objects or Selenium. This allows assertions and actions at custom authenticators, consent pages, account-link confirmation, and required actions before the final protocol response is checked.
+The app-facing browser flow remains interactive.
+Use `OidcAuthentication.startLogin()` or `saml.startLogin()`, then drive every expected Keycloak screen through the returned `InteractiveAuthenticationFlow.browser()` and Framework page objects or Selenium.
+This gives both protocols the same browser interaction surface for custom authenticators, consent pages, account-link confirmation, and required actions before checking their protocol-specific response.
 
 ## Scenarios covered
 

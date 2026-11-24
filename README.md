@@ -22,16 +22,15 @@ Then follow the [Getting Started guide](docs/getting-started.md) to add the exte
 
 ## Use
 
-Use the Framework's standard test annotations, with `@InjectSnapshot` when a test needs fast state restoration:
+Use the Framework's standard test annotations, with `@ResetKeycloakState` when a class needs fast state restoration:
 
 ```java
 @KeycloakIntegrationTest
+@ResetKeycloakState
 public class LoginIT {
     @InjectRealm(lifecycle = LifeCycle.CLASS)
     ManagedRealm realm;
 
-    @InjectSnapshot
-    Snapshot snapshot;
 }
 ```
 

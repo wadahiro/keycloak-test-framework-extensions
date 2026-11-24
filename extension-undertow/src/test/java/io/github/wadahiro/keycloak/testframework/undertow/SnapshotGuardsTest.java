@@ -20,6 +20,7 @@ class SnapshotGuardsTest {
             return (ExtensionContext) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{ExtensionContext.class},
                     (proxy, method, args) -> {
                         if (method.getName().equals("getConfigurationParameter")) return Optional.of(Boolean.toString(parallel));
+                        if (method.getName().equals("getRequiredTestClass")) return SnapshotGuardsTest.class;
                         throw new UnsupportedOperationException(method.getName());
                     });
         }

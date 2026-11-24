@@ -46,8 +46,7 @@ final class UndertowSnapshot extends ManagedTestResource implements AutoCloseabl
         if (captured) throw new IllegalStateException("Snapshot participants must be registered before the first capture");
         participants.add(participant);
     }
-    synchronized void initialize() { if (!captured) capture(); }
-    @Override public void runCleanup() { restore(); }
+    @Override public void runCleanup() { if (captured) restore(); }
     @Override public void dirty() { throw new UnsupportedOperationException("Use capture() to replace an H2 baseline"); }
     private void checkOpen() { if (closed) throw new IllegalStateException("H2 snapshot is closed"); }
     @Override public synchronized void close() {

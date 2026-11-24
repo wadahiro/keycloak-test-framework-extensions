@@ -2,8 +2,10 @@ package io.github.wadahiro.keycloak.testframework.undertow;
 
 import java.util.List;
 
+import io.github.wadahiro.keycloak.testframework.snapshot.DisabledSnapshot;
 import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
 import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotActivation;
 import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotParticipant;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.testframework.TestFrameworkExtension;
@@ -14,6 +16,8 @@ import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.testframework.server.*;
 
 public final class UndertowExtension implements TestFrameworkExtension {
+    @Override public List<Class<?>> alwaysEnabledValueTypes() { return List.of(Snapshot.class); }
+
     @Override public List<Supplier<?, ?>> suppliers() {
         return List.of(new ServerSupplier(), new AdminSupplier(), new SnapshotSupplier());
     }
@@ -50,6 +54,9 @@ public final class UndertowExtension implements TestFrameworkExtension {
         }
         @Override public Snapshot getValue(InstanceContext<Snapshot, InjectSnapshot> context) {
             rejectParallel(context);
+            if (!SnapshotActivation.isEnabled(context.getRegistry().getCurrentContext().getRequiredTestClass())) {
+                return new DisabledSnapshot();
+            }
             KeycloakServer server = context.getDependency(KeycloakServer.class);
             if (!(server instanceof UndertowProcessServer undertow)) {
                 throw new IllegalArgumentException("@InjectSnapshot requires kc.test.server=undertow-process");
@@ -59,6 +66,7 @@ public final class UndertowExtension implements TestFrameworkExtension {
         @Override public boolean compatible(InstanceContext<Snapshot, InjectSnapshot> a,
                 RequestedInstance<Snapshot, InjectSnapshot> b) { return true; }
         @Override public void onBeforeEach(InstanceContext<Snapshot, InjectSnapshot> context) {
+            if (context.getValue() instanceof DisabledSnapshot) return;
             for (InstanceContext<?, ?> resource : context.getRegistry().getDeployedInstances()) {
                 if (resource.getLifeCycle() == LifeCycle.METHOD) {
                     throw new IllegalArgumentException("@InjectSnapshot requires CLASS resources; METHOD resource: "
@@ -77,9 +85,10 @@ public final class UndertowExtension implements TestFrameworkExtension {
                 // Release/restore before the Framework deletes any class-owned fixture.
                 if (resource != context) resource.registerDependent(context);
             }
-            ((UndertowSnapshot) context.getValue()).initialize();
         }
-        @Override public void close(InstanceContext<Snapshot, InjectSnapshot> context) { ((UndertowSnapshot) context.getValue()).close(); }
+        @Override public void close(InstanceContext<Snapshot, InjectSnapshot> context) {
+            if (context.getValue() instanceof UndertowSnapshot snapshot) snapshot.close();
+        }
     }
     private static void rejectParallel(InstanceContext<?, ?> context) {
         if (context.getRegistry().getCurrentContext().getConfigurationParameter("junit.jupiter.execution.parallel.enabled")

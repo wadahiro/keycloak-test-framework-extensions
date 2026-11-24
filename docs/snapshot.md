@@ -1,6 +1,6 @@
 # Snapshot reset
 
-`keycloak-test-framework-snapshot` provides the shared `@InjectSnapshot Snapshot` test API.
+`keycloak-test-framework-snapshot` provides the class-level `@ResetKeycloakState` annotation for automatic reset and the optional `@InjectSnapshot Snapshot` handle for explicit reset operations.
 Use `keycloak-test-framework-undertow` for Keycloak 15.0.2 or `keycloak-test-framework-quarkus` for Keycloak 20–26; each adapter supplies the same API over its supported startup path.
 The current database implementation uses H2, but test code and `SnapshotParticipant` implementations do not depend on that database choice.
 Each supported Keycloak version has a small runtime artifact. The extension and runtime JARs do not bundle Keycloak server libraries; the runtime Maven plugin resolves those libraries outside the JUnit classpath.
@@ -49,12 +49,10 @@ See the [Quarkus integration module](../quarkus-integration-tests/pom.xml) and [
 
 ```java
 @KeycloakIntegrationTest
+@ResetKeycloakState
 public class ExampleIT {
     @InjectRealm(lifecycle = LifeCycle.CLASS, config = Fixture.class)
     ManagedRealm realm;
-
-    @InjectSnapshot
-    Snapshot snapshot;
 
     public static class Fixture implements RealmConfig {
         @Override
@@ -73,13 +71,14 @@ public class ExampleIT {
 }
 ```
 
-The annotation and handle are in `io.github.wadahiro.keycloak.testframework.snapshot`.
+`@ResetKeycloakState`, `@InjectSnapshot`, and `Snapshot` are in `io.github.wadahiro.keycloak.testframework.snapshot`.
 Other types are the standard Framework/JUnit types; no extra JUnit extension registration is needed.
 
 ## Lifecycle and explicit operations
 
 Each adapter's snapshot supplier uses the Framework's `Supplier.onBeforeEach` and `ManagedTestResource.runCleanup` hooks.
-An extension attached to `@InjectSnapshot` captures the final class baseline after the Framework's `@TestSetup` has run.
+`@ResetKeycloakState` captures the final class baseline after the Framework's `@TestSetup` has run, without requiring a snapshot field.
+An `@InjectSnapshot Snapshot` field also enables automatic reset for compatibility and gives tests access to explicit capture and restore operations.
 This includes declarative resources such as `@InjectRealm` as well as changes made through the admin API in `@TestSetup`.
 After the test and user `@AfterEach`, normal Framework cleanup runs, then the snapshot restores the database and caches.
 The next user `@BeforeEach` therefore sees the original baseline.
@@ -91,30 +90,33 @@ A new class can capture its own fixture on the same running server.
 `@InjectRealm` supports METHOD, CLASS, and GLOBAL lifecycle.
 These lifecycles control when the Framework creates and destroys the injected realm resource; they do not each provide a full database rollback.
 
-| Realm lifecycle | Framework behavior | With `@InjectSnapshot` |
+| Realm lifecycle | Framework behavior | With `@ResetKeycloakState` |
 | --- | --- | --- |
 | METHOD | Creates a realm for each test method and destroys it afterwards. | Unsupported. Snapshot rejects METHOD-scoped resources because it shares one database baseline across the class. |
 | CLASS | Shares a realm within one test class and removes it after the class. This is the default. | Recommended. The post-`@TestSetup` state becomes the class baseline and is restored after every method. |
 | GLOBAL | Shares a realm across compatible test classes in one Framework registry and destroys it when the registry closes. | Rejected for stateful resources. A class-specific baseline could otherwise carry setup changes into another class, depending on execution order. |
 
-For isolated test classes, use the default CLASS lifecycle with `@InjectSnapshot`.
+For isolated test classes, use the default CLASS lifecycle with `@ResetKeycloakState`.
 Use `@TestSetup` to create the realm's baseline fixture, then let snapshot restore cover direct admin API changes after each method.
 The snapshot covers the whole Keycloak database and supported caches, not just the injected realm.
 
-Do not combine `@InjectSnapshot` with a GLOBAL realm or other GLOBAL stateful snapshot participant.
+Do not combine `@ResetKeycloakState` or `@InjectSnapshot` with a GLOBAL realm or other GLOBAL stateful snapshot participant.
 The extension fails fast with a message naming the conflicting resource.
 Use CLASS lifecycle for snapshot-managed fixtures; this gives each test class its own setup and baseline without depending on class execution order.
 
 `ManagedRealm` also provides helpers such as `updateWithCleanup()` and `updateUserWithCleanup()` that record cleanup operations for the end of each method.
-Those helpers work with CLASS and GLOBAL realms; with `@InjectSnapshot`, use CLASS lifecycle and rely on snapshot restore for database changes.
+Those helpers work with CLASS and GLOBAL realms; with snapshot reset, use CLASS lifecycle and rely on snapshot restore for database changes.
 Direct `realm.admin()` calls are not tracked by those helpers; snapshot restore still reverts their database changes.
 
-Without `@InjectSnapshot`, METHOD lifecycle remains useful when each method needs a newly created and destroyed realm.
+Without snapshot reset, METHOD lifecycle remains useful when each method needs a newly created and destroyed realm.
 For resources included in a snapshot baseline, use CLASS lifecycle.
 
 Manual operations are available for tests that deliberately need to rebase or reset state during a test:
 
 ```java
+@InjectSnapshot
+Snapshot snapshot;
+
 @TestSetup
 public void prepareOnce() {
     // Create/update reusable fixtures through the admin API.

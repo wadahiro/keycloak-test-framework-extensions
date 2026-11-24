@@ -27,15 +27,13 @@ Inject `LdapTestServer`, then seed it with LDIF entries using its UnboundID `dir
 
 ```java
 @KeycloakIntegrationTest
+@ResetKeycloakState
 public class LdapLoginIT {
     @InjectRealm
     ManagedRealm realm;
 
     @InjectLdapTestServer
     LdapTestServer ldap;
-
-    @InjectSnapshot
-    Snapshot snapshot;
 
     @TestSetup
     public void configureDirectoryAndFederation() throws Exception {
@@ -70,7 +68,7 @@ The example uses an LDAP user-attribute mapper to expose `departmentNumber` as t
 
 `LdapTestServer` participates in `Snapshot` automatically.
 The baseline includes LDAP directory data and Keycloak's database state after `@TestSetup` completes.
-Calling `snapshot.capture()` manually replaces both the directory and database baselines.
+If you inject `@InjectSnapshot Snapshot`, calling `snapshot.capture()` manually replaces both the directory and database baselines.
 After each test method, the LDAP snapshot is restored before Keycloak's H2 restore clears Keycloak caches.
 This keeps external LDAP entries, the LDAP provider and mapper configuration, and imported local users on the same baseline.
 

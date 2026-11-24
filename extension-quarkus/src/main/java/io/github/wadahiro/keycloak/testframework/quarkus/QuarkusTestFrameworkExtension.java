@@ -2,8 +2,10 @@ package io.github.wadahiro.keycloak.testframework.quarkus;
 
 import java.util.List;
 
+import io.github.wadahiro.keycloak.testframework.snapshot.DisabledSnapshot;
 import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
 import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotActivation;
 import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotParticipant;
 import org.jboss.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
@@ -17,11 +19,16 @@ import org.keycloak.testframework.injection.LifeCycle;
 import org.keycloak.testframework.injection.RequestedInstance;
 import org.keycloak.testframework.injection.Supplier;
 import org.keycloak.testframework.injection.SupplierOrder;
-import org.keycloak.testframework.server.KeycloakServer;
-import org.keycloak.testframework.server.AbstractKeycloakServerSupplier;
 import org.keycloak.testframework.realm.ManagedRealm;
+import org.keycloak.testframework.server.AbstractKeycloakServerSupplier;
+import org.keycloak.testframework.server.KeycloakServer;
 
 public final class QuarkusTestFrameworkExtension implements TestFrameworkExtension {
+    @Override
+    public List<Class<?>> alwaysEnabledValueTypes() {
+        return List.of(Snapshot.class);
+    }
+
     @Override
     public List<Supplier<?, ?>> suppliers() {
         return List.of(new ServerSupplier(), new AdminSupplier(), new SnapshotSupplier());
@@ -64,6 +71,9 @@ public final class QuarkusTestFrameworkExtension implements TestFrameworkExtensi
         @Override
         public Snapshot getValue(InstanceContext<Snapshot, InjectSnapshot> context) {
             rejectParallel(context);
+            if (!SnapshotActivation.isEnabled(context.getRegistry().getCurrentContext().getRequiredTestClass())) {
+                return new DisabledSnapshot();
+            }
             KeycloakServer server = context.getDependency(KeycloakServer.class);
             if (!(server instanceof QuarkusProcessServer quarkus)) {
                 throw new IllegalArgumentException("@InjectSnapshot requires kc.test.server=quarkus-process");
@@ -76,6 +86,9 @@ public final class QuarkusTestFrameworkExtension implements TestFrameworkExtensi
 
         @Override
         public void onBeforeEach(InstanceContext<Snapshot, InjectSnapshot> context) {
+            if (context.getValue() instanceof DisabledSnapshot) {
+                return;
+            }
             for (InstanceContext<?, ?> resource : context.getRegistry().getDeployedInstances()) {
                 if (resource.getLifeCycle() == LifeCycle.METHOD) {
                     throw new IllegalArgumentException("@InjectSnapshot requires CLASS resources; METHOD resource: "
@@ -93,11 +106,10 @@ public final class QuarkusTestFrameworkExtension implements TestFrameworkExtensi
                 }
                 if (resource != context) resource.registerDependent(context);
             }
-            ((QuarkusSnapshot) context.getValue()).initialize();
         }
 
         @Override public void close(InstanceContext<Snapshot, InjectSnapshot> context) {
-            ((QuarkusSnapshot) context.getValue()).close();
+            if (context.getValue() instanceof QuarkusSnapshot snapshot) snapshot.close();
         }
     }
 

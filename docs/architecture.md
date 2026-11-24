@@ -24,7 +24,7 @@ Bind the plugin goal to `process-test-classes` so Maven and Failsafe runs prepar
 Use `kc.test.runtime.version` to check the selected Keycloak version.
 
 The GLOBAL server is shared within one Framework registry/test JVM.
-`@InjectSnapshot` creates a CLASS-scoped managed resource through the selected server adapter's supplier.
+`@ResetKeycloakState` activates a CLASS-scoped managed snapshot through the selected server adapter's supplier; `@InjectSnapshot` is optional and exposes manual snapshot operations.
 Test code depends only on the shared `Snapshot` API; each adapter supplies the database-specific implementation.
 The snapshot captures state after declarative resources and `@TestSetup` exist, then restores it after each method.
 A request barrier quiesces supported HTTP requests during restore, and Keycloak caches are cleared before the saved session entries are restored.

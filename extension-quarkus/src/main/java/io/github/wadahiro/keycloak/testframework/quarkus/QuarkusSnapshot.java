@@ -47,7 +47,6 @@ final class QuarkusSnapshot extends ManagedTestResource implements AutoCloseable
         participants.add(participant);
     }
 
-    synchronized void initialize() { if (!captured) capture(); }
     @Override public synchronized void runCleanup() { if (captured) restore(); }
     @Override public void dirty() { throw new UnsupportedOperationException("Use capture() to replace the H2 baseline"); }
 

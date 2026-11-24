@@ -7,8 +7,13 @@ import java.util.Set;
 
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.Order;
+import org.keycloak.testframework.KeycloakIntegrationTestExtension;
+import org.keycloak.testframework.injection.InstanceContext;
+import org.keycloak.testframework.injection.Registry;
 
 /** Captures the shared test baseline after Keycloak Test Framework's {@code @TestSetup} has run. */
+@Order(Integer.MAX_VALUE)
 public final class SnapshotSetupExtension implements BeforeEachCallback {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace
             .create(SnapshotSetupExtension.class);
@@ -23,9 +28,18 @@ public final class SnapshotSetupExtension implements BeforeEachCallback {
 
         Object testInstance = context.getRequiredTestInstance();
         Snapshot snapshot = snapshotField(testClass, testInstance);
+        if (snapshot == null && testClass.isAnnotationPresent(ResetKeycloakState.class)) {
+            Registry registry = KeycloakIntegrationTestExtension.getRegistry(context);
+            snapshot = registry.getDeployedInstances().stream()
+                    .map(InstanceContext::getValue)
+                    .filter(Snapshot.class::isInstance)
+                    .map(Snapshot.class::cast)
+                    .findFirst()
+                    .orElse(null);
+        }
         if (snapshot == null) {
             if (isKeycloakIntegrationTest(testClass)) {
-                throw new IllegalStateException("@InjectSnapshot was not injected; add the matching runtime adapter extension");
+                throw new IllegalStateException("Snapshot was not activated; add @ResetKeycloakState or an @InjectSnapshot field and the matching runtime adapter extension");
             }
             return;
         }

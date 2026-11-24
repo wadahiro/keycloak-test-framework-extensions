@@ -4,13 +4,14 @@ Use a separate integration-test module so its JDK and dependencies do not change
 
 ## Supported versions
 
-| Keycloak | Server JDK | Runtime artifact |
-| --- | --- | --- |
-| 20.0.5, 21.1.2, 22.0.5, 23.0.7, 24.0.5 | 17 | `keycloak-test-runtime-quarkus<major>` |
-| 25.0.6 | 21 | `keycloak-test-runtime-quarkus25` |
-| 26.8.2 | 25 | `keycloak-test-runtime-quarkus26` |
+| Keycloak | Server JDK | Extension artifact | Runtime artifact |
+| --- | --- | --- | --- |
+| 15.0.2 | 11 | `keycloak-test-framework-undertow` | `keycloak-test-runtime-undertow15` |
+| 20.0.5, 21.1.2, 22.0.5, 23.0.7, 24.0.5 | 17 | `keycloak-test-framework-quarkus` | `keycloak-test-runtime-quarkus<major>` |
+| 25.0.6 | 21 | `keycloak-test-framework-quarkus` | `keycloak-test-runtime-quarkus25` |
+| 26.8.2 | 25 | `keycloak-test-framework-quarkus` | `keycloak-test-runtime-quarkus26` |
 
-The Quarkus extension targets Keycloak 20–26. The example Maven integration-test runner and Keycloak Test Framework use JDK 25. The server starts in a child JVM selected by `KEYCLOAK_JAVA_HOME`, so the server can use its supported JDK independently.
+The Undertow adapter targets Keycloak 15.0.2; the Quarkus adapter targets Keycloak 20–26. The Maven integration-test runner and Keycloak Test Framework use JDK 25. The server starts in a child JVM selected by the adapter's Java-home setting, so the server can use its supported JDK independently.
 
 ## Configure Maven
 
@@ -26,7 +27,7 @@ Add the repository to the integration-test module's `pom.xml`. Releases are publ
 </repositories>
 ```
 
-Add the extension as a test dependency and configure the runtime adapter under the runtime Maven plugin's dependencies. Replace `26` and the Keycloak version with the adapter and version you selected above.
+Add the matching adapter as a test dependency and configure its runtime under the runtime Maven plugin's dependencies. Use `keycloak-test-framework-undertow` with `keycloak-test-runtime-undertow15` for Keycloak 15.0.2; use `keycloak-test-framework-quarkus` with the matching Quarkus runtime for Keycloak 20–26.
 
 ```xml
 <dependency>
@@ -48,7 +49,7 @@ For LDAP User Federation and LDAP mapper tests, add the in-memory directory help
 </dependency>
 ```
 
-The LDAP helper uses UnboundID's in-memory LDAP server and restores its directory snapshot together with the H2 baseline.
+The LDAP helper uses UnboundID's in-memory LDAP server and restores its directory snapshot together with the database baseline.
 See [LDAP federation testing](ldap-testing.md) for setup and scope.
 
 The extension brings in the Keycloak Test Framework core. For OIDC browser-flow tests, add its OAuth module as well:
@@ -110,11 +111,12 @@ In the build's `<plugins>` section, add:
 </plugin>
 ```
 
+Replace the Quarkus runtime in this example with `keycloak-test-runtime-undertow15` for Keycloak 15.0.2.
 The plugin resolves Keycloak server dependencies in its isolated Maven class realm, keeping them out of the test and IDE classpaths. More details, including direct IDE launches, are in [runtime plugin setup](runtime-plugin.md).
 
 ## Run a test
 
-Set the child server JDK and select the Quarkus suppliers in `src/test/resources/keycloak-test.properties`:
+Set the child server JDK and select the server adapter's suppliers in `src/test/resources/keycloak-test.properties`:
 
 ```properties
 kc.test.server=quarkus-process
@@ -122,6 +124,8 @@ kc.test.keycloak=quarkus-admin
 kc.test.quarkus.version=26.8.2
 ```
 
-For Keycloak 26, point `KEYCLOAK_JAVA_HOME` to JDK 25, then run the integration-test module with `mvn verify`. Use the JDK listed in the table for other Keycloak versions. The runtime artifact configured in Maven must match `kc.test.quarkus.version`.
+For Keycloak 15.0.2, use `kc.test.server=undertow-process`, `kc.test.keycloak=undertow-admin`, and set `kc.test.undertow.java.home` to the JDK 11 home.
+For Keycloak 26, point `KEYCLOAK_JAVA_HOME` to JDK 25, then run the integration-test module with `mvn verify`.
+Use the JDK listed in the table for other Keycloak versions, and make sure the runtime artifact configured in Maven matches the selected version.
 
-For test fixture setup and database snapshot behavior, see [H2 snapshot lifecycle](h2-snapshot.md).
+For test fixture setup and state snapshot behavior, see [snapshot lifecycle](snapshot.md).

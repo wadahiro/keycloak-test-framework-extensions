@@ -3,7 +3,8 @@
 The extension JAR and version-specific runtime JAR contain no Keycloak server libraries.
 Keycloak dependencies are resolved by `keycloak-test-runtime-maven-plugin` in Maven's isolated plugin class realm.
 The plugin writes their absolute paths to `target/test-classes/META-INF/keycloak-test-runtime.properties`.
-The Quarkus extension reads that descriptor and uses the official Quarkus bootstrap APIs to start Keycloak in a separate JVM.
+The Quarkus extension reads that descriptor and uses the official Quarkus bootstrap APIs to start Keycloak 20–26 in a separate JVM.
+The Undertow adapter uses the same prepared classpath to start Keycloak 15.0.2 through its version-specific bootstrap.
 
 Add the extension to the integration-test module's test dependencies and configure one runtime artifact under the Maven plugin's dependencies:
 

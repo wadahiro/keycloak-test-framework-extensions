@@ -4,41 +4,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotParticipant;
 import org.keycloak.testframework.injection.ManagedTestResource;
 
 /** Test-process handle for snapshot commands executed by the Quarkus child process. */
-public final class QuarkusH2Snapshot extends ManagedTestResource implements AutoCloseable {
+final class QuarkusSnapshot extends ManagedTestResource implements AutoCloseable, Snapshot {
     private final QuarkusProcessServer server;
     private final String lease = UUID.randomUUID().toString();
-    private final List<io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant> participants = new ArrayList<>();
+    private final List<SnapshotParticipant> participants = new ArrayList<>();
     private boolean captured;
     private boolean closed;
     private double lastRestoreMillis;
 
-    QuarkusH2Snapshot(QuarkusProcessServer server) { this.server = server; }
+    QuarkusSnapshot(QuarkusProcessServer server) { this.server = server; }
 
+    /** Replaces the single baseline used by automatic cleanup and later restore calls. */
     public synchronized void capture() {
         checkOpen();
-        for (io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant participant : participants) participant.capture();
+        for (SnapshotParticipant participant : participants) participant.capture();
         if (captured) server.command("RELEASE", lease);
         captured = false;
         server.command("CAPTURE", lease);
         captured = true;
     }
 
+    /** Restores the current baseline without consuming it, so it can be restored again. */
     public synchronized void restore() {
         checkOpen();
         if (!captured) throw new IllegalStateException("No H2 baseline has been captured");
         long started = System.nanoTime();
-        for (io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant participant : participants) participant.restore();
+        for (SnapshotParticipant participant : participants) participant.restore();
         server.command("RESTORE", lease);
         lastRestoreMillis = (System.nanoTime() - started) / 1e6;
     }
 
     public synchronized double getLastRestoreMillis() { return lastRestoreMillis; }
-    public long getServerPid() { return server.getPid(); }
-
-    synchronized void addParticipant(io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant participant) {
+    synchronized void addParticipant(SnapshotParticipant participant) {
         checkOpen();
         if (participants.contains(participant)) return;
         if (captured) throw new IllegalStateException("Snapshot participants must be registered before first capture");

@@ -1,5 +1,7 @@
 package io.github.wadahiro.keycloak.testframework.undertow;
 
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import java.util.List;
 import java.util.Map;
 
@@ -39,8 +41,8 @@ public class LdapFederationIT {
     @InjectRealm
     ManagedRealm realm;
 
-    @InjectH2Snapshot
-    H2Snapshot snapshot;
+    @InjectSnapshot
+    Snapshot snapshot;
 
     @InjectLdapTestServer
     LdapTestServer ldap;
@@ -118,7 +120,6 @@ public class LdapFederationIT {
             }
         }
 
-        snapshot.capture();
     }
 
     @Test

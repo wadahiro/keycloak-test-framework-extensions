@@ -1,5 +1,7 @@
 package io.github.wadahiro.keycloak.testframework.quarkus;
 
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -14,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class QuarkusBootstrapIT {
     @InjectRealm(lifecycle = LifeCycle.CLASS) ManagedRealm realm;
     @InjectAdminClient Keycloak admin;
-    @InjectQuarkusH2Snapshot QuarkusH2Snapshot snapshot;
+    @InjectSnapshot Snapshot snapshot;
 
     @Test void frameworkManagesARealmOnOfficialQuarkusBootstrap() {
         assertNotNull(realm.admin().toRepresentation().getId());

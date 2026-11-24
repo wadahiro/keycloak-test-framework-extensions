@@ -1,6 +1,10 @@
 package io.github.wadahiro.keycloak.testframework.undertow;
 
 import java.util.List;
+
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotParticipant;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.testframework.TestFrameworkExtension;
 import org.keycloak.testframework.admin.*;
@@ -38,36 +42,36 @@ public final class UndertowExtension implements TestFrameworkExtension {
                     .password(UndertowProcessServer.value("admin.password", "admin")).build();
         }
     }
-    public static final class SnapshotSupplier implements Supplier<H2Snapshot, InjectH2Snapshot> {
+    public static final class SnapshotSupplier implements Supplier<Snapshot, InjectSnapshot> {
         @Override public int order() { return 2000; }
-        @Override public List<Dependency> getDependencies(RequestedInstance<H2Snapshot, InjectH2Snapshot> context) {
+        @Override public List<Dependency> getDependencies(RequestedInstance<Snapshot, InjectSnapshot> context) {
             return DependenciesBuilder.create(KeycloakServer.class).build();
         }
-        @Override public H2Snapshot getValue(InstanceContext<H2Snapshot, InjectH2Snapshot> context) {
+        @Override public Snapshot getValue(InstanceContext<Snapshot, InjectSnapshot> context) {
             rejectParallel(context);
             KeycloakServer server = context.getDependency(KeycloakServer.class);
             if (!(server instanceof UndertowProcessServer undertow)) {
-                throw new IllegalArgumentException("@InjectH2Snapshot requires kc.test.server=undertow-process");
+                throw new IllegalArgumentException("@InjectSnapshot requires kc.test.server=undertow-process");
             }
-            return new H2Snapshot(undertow);
+            return new UndertowSnapshot(undertow);
         }
-        @Override public boolean compatible(InstanceContext<H2Snapshot, InjectH2Snapshot> a,
-                RequestedInstance<H2Snapshot, InjectH2Snapshot> b) { return true; }
-        @Override public void onBeforeEach(InstanceContext<H2Snapshot, InjectH2Snapshot> context) {
+        @Override public boolean compatible(InstanceContext<Snapshot, InjectSnapshot> a,
+                RequestedInstance<Snapshot, InjectSnapshot> b) { return true; }
+        @Override public void onBeforeEach(InstanceContext<Snapshot, InjectSnapshot> context) {
             for (InstanceContext<?, ?> resource : context.getRegistry().getDeployedInstances()) {
                 if (resource.getLifeCycle() == LifeCycle.METHOD) {
                     throw new IllegalArgumentException("H2 reset requires CLASS/GLOBAL resources; METHOD resource: "
                             + resource.getRequestedValueType().getSimpleName());
                 }
-                if (resource.getValue() instanceof io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant participant) {
-                    context.getValue().addParticipant(participant);
+                if (resource.getValue() instanceof SnapshotParticipant participant) {
+                    ((UndertowSnapshot) context.getValue()).addParticipant(participant);
                 }
                 // Release/restore before the Framework deletes any class-owned fixture.
                 if (resource != context) resource.registerDependent(context);
             }
-            context.getValue().initialize();
+            ((UndertowSnapshot) context.getValue()).initialize();
         }
-        @Override public void close(InstanceContext<H2Snapshot, InjectH2Snapshot> context) { context.getValue().close(); }
+        @Override public void close(InstanceContext<Snapshot, InjectSnapshot> context) { ((UndertowSnapshot) context.getValue()).close(); }
     }
     private static void rejectParallel(InstanceContext<?, ?> context) {
         if (context.getRegistry().getCurrentContext().getConfigurationParameter("junit.jupiter.execution.parallel.enabled")

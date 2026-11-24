@@ -2,6 +2,10 @@ package io.github.wadahiro.keycloak.testframework.quarkus;
 
 import java.util.List;
 
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.SnapshotParticipant;
+import org.jboss.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.testframework.TestFrameworkExtension;
 import org.keycloak.testframework.admin.AdminClientFactory;
@@ -15,7 +19,6 @@ import org.keycloak.testframework.injection.Supplier;
 import org.keycloak.testframework.injection.SupplierOrder;
 import org.keycloak.testframework.server.KeycloakServer;
 import org.keycloak.testframework.server.AbstractKeycloakServerSupplier;
-import org.jboss.logging.Logger;
 
 public final class QuarkusTestFrameworkExtension implements TestFrameworkExtension {
     @Override
@@ -48,46 +51,45 @@ public final class QuarkusTestFrameworkExtension implements TestFrameworkExtensi
         }
     }
 
-    public static final class SnapshotSupplier implements Supplier<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> {
+    public static final class SnapshotSupplier implements Supplier<Snapshot, InjectSnapshot> {
         @Override public int order() { return 2000; }
 
         @Override
         public List<org.keycloak.testframework.injection.Dependency> getDependencies(
-                org.keycloak.testframework.injection.RequestedInstance<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> context) {
+                org.keycloak.testframework.injection.RequestedInstance<Snapshot, InjectSnapshot> context) {
             return org.keycloak.testframework.injection.DependenciesBuilder.create(KeycloakServer.class).build();
         }
 
         @Override
-        public QuarkusH2Snapshot getValue(
-                InstanceContext<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> context) {
+        public Snapshot getValue(InstanceContext<Snapshot, InjectSnapshot> context) {
             rejectParallel(context);
             KeycloakServer server = context.getDependency(KeycloakServer.class);
             if (!(server instanceof QuarkusProcessServer quarkus)) {
-                throw new IllegalArgumentException("@InjectQuarkusH2Snapshot requires kc.test.server=quarkus-process");
+                throw new IllegalArgumentException("@InjectSnapshot requires kc.test.server=quarkus-process");
             }
-            return new QuarkusH2Snapshot(quarkus);
+            return new QuarkusSnapshot(quarkus);
         }
 
-        @Override public boolean compatible(InstanceContext<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> a,
-                RequestedInstance<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> b) { return true; }
+        @Override public boolean compatible(InstanceContext<Snapshot, InjectSnapshot> a,
+                RequestedInstance<Snapshot, InjectSnapshot> b) { return true; }
 
         @Override
-        public void onBeforeEach(InstanceContext<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> context) {
+        public void onBeforeEach(InstanceContext<Snapshot, InjectSnapshot> context) {
             for (InstanceContext<?, ?> resource : context.getRegistry().getDeployedInstances()) {
                 if (resource.getLifeCycle() == LifeCycle.METHOD) {
                     throw new IllegalArgumentException("H2 reset requires CLASS/GLOBAL resources; METHOD resource: "
                             + resource.getRequestedValueType().getSimpleName());
                 }
-                if (resource.getValue() instanceof io.github.wadahiro.keycloak.testframework.snapshot.H2SnapshotParticipant participant) {
-                    context.getValue().addParticipant(participant);
+                if (resource.getValue() instanceof SnapshotParticipant participant) {
+                    ((QuarkusSnapshot) context.getValue()).addParticipant(participant);
                 }
                 if (resource != context) resource.registerDependent(context);
             }
-            context.getValue().initialize();
+            ((QuarkusSnapshot) context.getValue()).initialize();
         }
 
-        @Override public void close(InstanceContext<QuarkusH2Snapshot, InjectQuarkusH2Snapshot> context) {
-            context.getValue().close();
+        @Override public void close(InstanceContext<Snapshot, InjectSnapshot> context) {
+            ((QuarkusSnapshot) context.getValue()).close();
         }
     }
 

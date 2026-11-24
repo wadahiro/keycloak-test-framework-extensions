@@ -3,6 +3,8 @@ package io.github.wadahiro.keycloak.testframework.quarkus;
 import java.net.URI;
 import java.net.http.*;
 import java.util.Map;
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import org.junit.jupiter.api.*;
 import org.keycloak.testframework.annotations.*;
 import org.keycloak.testframework.realm.*;
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class DBaselineSessionIT {
     @InjectRealm(config = AH2SnapshotIT.Fixture.class) ManagedRealm realm;
-    @InjectQuarkusH2Snapshot QuarkusH2Snapshot snapshot;
+    @InjectSnapshot Snapshot snapshot;
     static String refreshToken, userId, sessionId;
     @TestSetup public void captureSessionFixture() throws Exception {
         var response = token("grant_type=password&username=baseline-user&password=password");
@@ -21,7 +23,6 @@ public class DBaselineSessionIT {
         refreshToken = (String) JsonSerialization.readValue(response.body(), Map.class).get("refresh_token");
         userId = realm.admin().users().search("baseline-user").getFirst().getId();
         sessionId = realm.admin().users().get(userId).getUserSessions().getFirst().getId();
-        snapshot.capture();
     }
     @Test @Order(1) void logOutTheBaselineSession() {
         realm.admin().logoutAll();

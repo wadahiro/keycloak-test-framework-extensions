@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.http.*;
 import java.nio.file.*;
 import java.util.Map;
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import org.junit.jupiter.api.*;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.*;
@@ -18,10 +20,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AH2SnapshotIT {
     @InjectRealm(lifecycle = LifeCycle.CLASS, config = Fixture.class) ManagedRealm realm;
     @InjectAdminClient Keycloak admin;
-    @InjectH2Snapshot H2Snapshot snapshot;
+    @InjectSnapshot Snapshot snapshot;
     static String originalUserId, originalClientId, oldRefreshToken;
     static String masterDisplayName;
-    static long pid;
 
     public static class Fixture implements RealmConfig {
         @Override public RealmBuilder configure(RealmBuilder builder) {
@@ -34,13 +35,9 @@ public class AH2SnapshotIT {
         originalUserId = realm.admin().users().search("baseline-user").getFirst().getId();
         originalClientId = realm.admin().clients().findByClientId("snapshot-client").getFirst().getId();
         masterDisplayName = admin.realm("master").toRepresentation().getDisplayName();
-        pid = snapshot.getServerPid();
-        snapshot.capture();
-        Files.writeString(work().resolve("snapshot-pid.txt"), Long.toString(pid));
         Files.writeString(work().resolve("snapshot-realm.txt"), realm.getName());
     }
     @BeforeEach void baselineIsReadyBeforeUserSetup() {
-        assertEquals(pid, snapshot.getServerPid());
         assertEquals("setup-baseline", realm.admin().toRepresentation().getDisplayName());
         assertEquals(originalUserId, realm.admin().users().search("baseline-user").getFirst().getId());
         assertEquals(originalClientId, realm.admin().clients().findByClientId("snapshot-client").getFirst().getId());

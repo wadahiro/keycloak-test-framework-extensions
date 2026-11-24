@@ -2,6 +2,8 @@ package io.github.wadahiro.keycloak.testframework.undertow;
 
 import java.lang.reflect.Proxy;
 import java.util.*;
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.keycloak.testframework.injection.*;
@@ -9,8 +11,8 @@ import org.keycloak.testframework.server.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SnapshotGuardsTest {
-    @InjectH2Snapshot H2Snapshot field;
-    private InjectH2Snapshot annotation() throws Exception { return getClass().getDeclaredField("field").getAnnotation(InjectH2Snapshot.class); }
+    @InjectSnapshot UndertowSnapshot field;
+    private InjectSnapshot annotation() throws Exception { return getClass().getDeclaredField("field").getAnnotation(InjectSnapshot.class); }
     static final class TestRegistry extends Registry {
         boolean parallel;
         @Override public ExtensionContext getCurrentContext() {
@@ -21,8 +23,8 @@ class SnapshotGuardsTest {
                     });
         }
     }
-    private InstanceContext<H2Snapshot, InjectH2Snapshot> context(TestRegistry registry, KeycloakServer server) throws Exception {
-        return new InstanceContext<>(-1, registry, new UndertowExtension.SnapshotSupplier(), annotation(), H2Snapshot.class, List.of()) {
+    private InstanceContext<Snapshot, InjectSnapshot> context(TestRegistry registry, KeycloakServer server) throws Exception {
+        return new InstanceContext<>(-1, registry, new UndertowExtension.SnapshotSupplier(), annotation(), Snapshot.class, List.of()) {
             @Override public <D> D getDependency(Class<D> type) { return type.cast(server); }
         };
     }
@@ -44,9 +46,9 @@ class SnapshotGuardsTest {
     }
     @Test void rejectsMethodScopedResourcesBeforeCapture() throws Exception {
         TestRegistry registry = new TestRegistry();
-        Supplier<Object, InjectH2Snapshot> methodSupplier = new Supplier<>() {
-            public Object getValue(InstanceContext<Object, InjectH2Snapshot> c) { return new Object(); }
-            public boolean compatible(InstanceContext<Object, InjectH2Snapshot> a, RequestedInstance<Object, InjectH2Snapshot> b) { return true; }
+        Supplier<Object, InjectSnapshot> methodSupplier = new Supplier<>() {
+            public Object getValue(InstanceContext<Object, InjectSnapshot> c) { return new Object(); }
+            public boolean compatible(InstanceContext<Object, InjectSnapshot> a, RequestedInstance<Object, InjectSnapshot> b) { return true; }
             public LifeCycle getDefaultLifecycle() { return LifeCycle.METHOD; }
         };
         registry.getDeployedInstances().add(new InstanceContext<>(-1, registry, methodSupplier, annotation(), Object.class, List.of()));

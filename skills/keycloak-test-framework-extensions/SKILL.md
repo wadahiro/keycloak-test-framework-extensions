@@ -1,6 +1,6 @@
 ---
 name: keycloak-test-framework-extensions
-description: Use this repository's Keycloak Test Framework extensions to test browser login, SAML clients, OIDC/SAML identity brokering, LDAP federation, and isolated Keycloak runtimes with fast H2 reset.
+description: Use this repository's Keycloak Test Framework extensions to test browser login, SAML clients, OIDC/SAML identity brokering, LDAP federation, and isolated Keycloak runtimes with fast shared-state snapshots.
 license: Apache-2.0
 metadata:
   runtime: JDK 25 runner with per-version isolated Keycloak server JDKs
@@ -18,8 +18,8 @@ Determine the production/server JDK, the existing unit-test JDK, and the integra
 Preserve the application's current Java target and unit-test runtime.
 
 This extension uses an unmodified modern Keycloak Test Framework in the runner JVM.
-It starts Maven-resolved Keycloak classes with the official Quarkus bootstrap in a separate process.
-Supported server runtimes are Keycloak 20.0.5, 21.1.2, 22.0.5, 23.0.7 and 24.0.5 on Java 17; 25.0.6 on Java 21; and 26.8.2 on Java 25.
+It starts server runtimes in separate processes through the selected adapter: Undertow for Keycloak 15.0.2, and the official Quarkus bootstrap for Keycloak 20–26.
+Supported server runtimes are Keycloak 15.0.2 on Java 11; 20.0.5, 21.1.2, 22.0.5, 23.0.7 and 24.0.5 on Java 17; 25.0.6 on Java 21; and 26.8.2 on Java 25.
 JDK 25 is the preferred runner; the extension bytecode targets Java 21.
 Do not describe this as same-JVM embedded execution.
 
@@ -27,7 +27,7 @@ Do not describe this as same-JVM embedded execution.
 
 1. Read [references/jdk-isolation.md](references/jdk-isolation.md) when choosing Maven modules, compiler settings, test JVMs, or CI setup.
 2. Read [references/extension-api.md](references/extension-api.md) for dependencies, per-version runtime artifacts, service-discovery aliases, and configuration.
-3. Read [references/h2-snapshot.md](references/h2-snapshot.md) for automatic H2 snapshot reset.
+3. Read [references/snapshot.md](references/snapshot.md) for automatic snapshot reset.
 4. Read [references/ide-testing.md](references/ide-testing.md) when configuring IntelliJ IDEA or Eclipse JUnit launches.
 5. Read [the broker testing guide](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
 6. Read [LDAP federation testing](../../docs/ldap-testing.md) when testing LDAP User Federation or LDAP storage mappers.
@@ -38,7 +38,7 @@ This boundary matters because the Framework dependency graph can include newer K
 Prefer Failsafe `*IT` tests in the integration-test module.
 Add the extension as a test dependency and configure the selected runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`; do not add server dependencies to the test classpath or the modern Framework/JUnit stack to the Java 11 unit-test module.
 Keep the server GLOBAL.
-Use CLASS/GLOBAL fixture resources and `@InjectH2Snapshot` for automatic reset.
+Use CLASS/GLOBAL fixture resources and `@InjectSnapshot Snapshot` for automatic reset.
 Use a disposable server and test realms rather than attaching to an operational realm.
 
 The Java extension implements server lifecycle, H2 configuration, and database/session restoration.

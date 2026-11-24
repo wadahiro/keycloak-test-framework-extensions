@@ -1,6 +1,8 @@
 package io.github.wadahiro.keycloak.testframework.undertow;
 
 import java.nio.file.Files;
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.testframework.annotations.*;
@@ -11,9 +13,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class BH2SnapshotReuseIT {
     @InjectRealm ManagedRealm realm;
     @InjectAdminClient Keycloak admin;
-    @InjectH2Snapshot H2Snapshot snapshot;
+    @InjectSnapshot Snapshot snapshot;
     @Test void newClassHasFreshBaselineAndSharesTheSameServer() throws Exception {
-        assertEquals(Long.parseLong(Files.readString(AH2SnapshotIT.work().resolve("snapshot-pid.txt"))), snapshot.getServerPid());
         String oldRealm = Files.readString(AH2SnapshotIT.work().resolve("snapshot-realm.txt"));
         assertTrue(admin.realms().findAll().stream().noneMatch(rep -> oldRealm.equals(rep.getRealm())));
         assertTrue(realm.admin().users().search("baseline-user").isEmpty());

@@ -54,4 +54,4 @@ Use **Run As > Maven build...** with the `verify` goal when Maven Failsafe lifec
 - `requires JDK <n>`: point `KEYCLOAK_JAVA_HOME` at a JDK of the required feature version, not at the IDE's JDK unless those versions happen to match.
 - Runtime startup failures: inspect the run directory reported by the exception, especially `server.log`.
 
-See [architecture](architecture.md) for the process boundary and [H2 snapshot lifecycle](h2-snapshot.md) for state reset behavior.
+See [architecture](architecture.md) for the process boundary and [snapshot lifecycle](snapshot.md) for state reset behavior.

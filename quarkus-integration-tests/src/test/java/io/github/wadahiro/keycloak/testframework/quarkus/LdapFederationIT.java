@@ -2,6 +2,8 @@ package io.github.wadahiro.keycloak.testframework.quarkus;
 
 import java.util.List;
 import java.util.Map;
+import io.github.wadahiro.keycloak.testframework.snapshot.InjectSnapshot;
+import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -39,8 +41,8 @@ public class LdapFederationIT {
     @InjectRealm
     ManagedRealm realm;
 
-    @InjectQuarkusH2Snapshot
-    QuarkusH2Snapshot snapshot;
+    @InjectSnapshot
+    Snapshot snapshot;
 
     @InjectLdapTestServer
     LdapTestServer ldap;
@@ -118,7 +120,6 @@ public class LdapFederationIT {
             }
         }
 
-        snapshot.capture();
     }
 
     @Test

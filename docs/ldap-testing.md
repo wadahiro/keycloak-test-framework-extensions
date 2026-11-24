@@ -34,8 +34,8 @@ public class LdapLoginIT {
     @InjectLdapTestServer
     LdapTestServer ldap;
 
-    @InjectQuarkusH2Snapshot
-    QuarkusH2Snapshot snapshot;
+    @InjectSnapshot
+    Snapshot snapshot;
 
     @TestSetup
     public void configureDirectoryAndFederation() throws Exception {
@@ -58,7 +58,7 @@ public class LdapLoginIT {
 
         // Create the LDAP user-storage component and its LDAPStorageMapper here.
         // Use ldap.getConnectionUrl(), getBindDn(), getBindPassword(), and getBaseDn().
-        snapshot.capture();
+        // The post-@TestSetup LDAP and Keycloak state is captured automatically.
     }
 }
 ```
@@ -68,16 +68,17 @@ The example uses an LDAP user-attribute mapper to expose `departmentNumber` as t
 
 ## Coordinated state reset
 
-`LdapTestServer` participates in `QuarkusH2Snapshot` automatically.
-The first baseline includes the LDAP directory data; `snapshot.capture()` replaces both the directory and H2 baselines after imperative setup.
+`LdapTestServer` participates in `Snapshot` automatically.
+The baseline includes LDAP directory data and Keycloak's database state after `@TestSetup` completes.
+Calling `snapshot.capture()` manually replaces both the directory and database baselines.
 After each test method, the LDAP snapshot is restored before Keycloak's H2 restore clears Keycloak caches.
 This keeps external LDAP entries, the LDAP provider and mapper configuration, and imported local users on the same baseline.
 
-Use CLASS or GLOBAL lifecycle for the LDAP server and other fixtures when using H2 reset.
+Use CLASS or GLOBAL lifecycle for the LDAP server and other fixtures when using snapshot reset.
 The default LDAP server lifecycle is CLASS.
 Do not run tests in parallel against the shared Keycloak server.
 
 LDAP server configuration and listener settings are fixed for the life of the injected server; snapshots capture directory data, not server configuration.
 The helper currently uses plain LDAP/simple bind and does not emulate Active Directory-specific behavior, TLS, StartTLS, or SASL.
 
-See [H2 snapshot lifecycle](h2-snapshot.md) for snapshot setup and reset boundaries.
+See [snapshot lifecycle](snapshot.md) for snapshot setup and reset boundaries.

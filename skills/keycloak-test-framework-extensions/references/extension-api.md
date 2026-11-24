@@ -4,6 +4,8 @@ Install the required modules locally until artifacts are published:
 
 ```sh
 mvn -pl runtime-classpath-maven-plugin,extension-quarkus,extension-snapshot,extension-saml,extension-broker,extension-ldap,runtime-quarkus/26 -am install -DskipTests
+# For the Keycloak 15.0.2 adapter and integration tests:
+mvn -Pundertow15 -pl undertow-integration-tests -am install -DskipTests
 ```
 
 Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-quarkus:0.1.0-SNAPSHOT` to a separate integration-test module with test scope.
@@ -56,8 +58,8 @@ The Undertow 15 adapter consumes provider dependencies from `KeycloakServerConfi
 Run its integration tests with `mvn -Pundertow15 verify`, the Test Framework on JDK 25, and `KEYCLOAK_JAVA_HOME` set to JDK 11.
 
 The runtime Maven plugin generates `target/test-classes/META-INF/keycloak-test-runtime.properties`; bind `prepare` to `process-test-classes` or run it before direct IDE JUnit launches.
-See the [runtime plugin guide](../../../docs/runtime-plugin.md), [H2 snapshot guide](h2-snapshot.md), and [IDE guide](ide-testing.md).
+See the [runtime plugin guide](../../../docs/runtime-plugin.md), [snapshot guide](../../../docs/snapshot.md), and [IDE guide](../../../docs/ide-testing.md).
 
 For LDAP federation tests, add `keycloak-test-framework-ldap` with test scope.
-It starts an UnboundID in-memory LDAP server and restores its directory snapshot alongside H2.
+It starts an UnboundID in-memory LDAP server and restores its directory snapshot alongside the database baseline.
 See the [LDAP testing guide](../../../docs/ldap-testing.md).

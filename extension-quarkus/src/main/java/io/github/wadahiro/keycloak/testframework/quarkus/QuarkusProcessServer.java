@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
@@ -215,25 +217,39 @@ public final class QuarkusProcessServer implements KeycloakServer {
         var builder = KeycloakBuilder.builder().serverUrl(baseUrl).realm("master").clientId("admin-cli")
                 .username(Config.getAdminUsername()).password(Config.getAdminPassword()).grantType(OAuth2Constants.PASSWORD);
         if (tlsEnabled) builder.resteasyClient(Keycloak.getClientProvider().newRestEasyClient(null, trustAllContext(), false));
-        try (Keycloak admin = builder.build()) {
-            var master = admin.realm("master");
-            ClientRepresentation client = new ClientRepresentation();
-            client.setClientId(Config.getAdminClientId());
-            client.setEnabled(true);
-            client.setProtocol("openid-connect");
-            client.setPublicClient(false);
-            client.setServiceAccountsEnabled(true);
-            client.setSecret(Config.getAdminClientSecret());
-            try (Response response = master.clients().create(client)) {
-                if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
-                    throw new IOException("Unable to bootstrap Test Framework admin client: HTTP " + response.getStatus());
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (true) {
+            try (Keycloak admin = builder.build()) {
+                var master = admin.realm("master");
+                ClientRepresentation client = new ClientRepresentation();
+                client.setClientId(Config.getAdminClientId());
+                client.setEnabled(true);
+                client.setProtocol("openid-connect");
+                client.setPublicClient(false);
+                client.setServiceAccountsEnabled(true);
+                client.setSecret(Config.getAdminClientSecret());
+                try (Response response = master.clients().create(client)) {
+                    if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
+                        throw new IOException("Unable to bootstrap Test Framework admin client: HTTP " + response.getStatus());
+                    }
                 }
+                String clientId = master.clients().findByClientId(Config.getAdminClientId()).get(0).getId();
+                UserRepresentation serviceAccount = master.clients().get(clientId).getServiceAccountUser();
+                RoleRepresentation adminRole = master.roles().get("admin").toRepresentation();
+                master.users().get(serviceAccount.getId()).roles().realmLevel().add(List.of(adminRole));
+                return;
+            } catch (ProcessingException e) {
+                if (!hasCause(e, NotAuthorizedException.class) || System.nanoTime() >= deadline) throw e;
+                Thread.sleep(100);
             }
-            String clientId = master.clients().findByClientId(Config.getAdminClientId()).get(0).getId();
-            UserRepresentation serviceAccount = master.clients().get(clientId).getServiceAccountUser();
-            RoleRepresentation adminRole = master.roles().get("admin").toRepresentation();
-            master.users().get(serviceAccount.getId()).roles().realmLevel().add(List.of(adminRole));
         }
+    }
+
+    private static boolean hasCause(Throwable error, Class<? extends Throwable> type) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (type.isInstance(cause)) return true;
+        }
+        return false;
     }
 
     private Path configuredJavaHome() {

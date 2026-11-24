@@ -38,7 +38,7 @@ This boundary matters because the Framework dependency graph can include newer K
 Prefer Failsafe `*IT` tests in the integration-test module.
 Add the extension as a test dependency and configure the selected runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`; do not add server dependencies to the test classpath or the modern Framework/JUnit stack to the Java 11 unit-test module.
 Keep the server GLOBAL.
-Use CLASS/GLOBAL fixture resources and `@InjectSnapshot Snapshot` for automatic reset.
+Use CLASS fixture resources and `@InjectSnapshot Snapshot` for automatic reset; GLOBAL stateful resources are rejected with snapshots.
 Use a disposable server and test realms rather than attaching to an operational realm.
 
 The Java extension implements server lifecycle, H2 configuration, and database/session restoration.

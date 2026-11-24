@@ -86,9 +86,31 @@ The next user `@BeforeEach` therefore sees the original baseline.
 Class cleanup releases the baseline before the Framework removes that class's realms and clients.
 A new class can capture its own fixture on the same running server.
 
-`@InjectRealm` defaults to CLASS lifecycle and works with this reset model on the Undertow adapter for Keycloak 15.0.2 and the Quarkus adapter for Keycloak 20–26.
-METHOD lifecycle resources are rejected because they are destroyed after each method while the database baseline is shared across the class.
-Use CLASS or GLOBAL lifecycle for resources included in the baseline.
+## Combining snapshots with `@InjectRealm`
+
+`@InjectRealm` supports METHOD, CLASS, and GLOBAL lifecycle.
+These lifecycles control when the Framework creates and destroys the injected realm resource; they do not each provide a full database rollback.
+
+| Realm lifecycle | Framework behavior | With `@InjectSnapshot` |
+| --- | --- | --- |
+| METHOD | Creates a realm for each test method and destroys it afterwards. | Unsupported. Snapshot rejects METHOD-scoped resources because it shares one database baseline across the class. |
+| CLASS | Shares a realm within one test class and removes it after the class. This is the default. | Recommended. The post-`@TestSetup` state becomes the class baseline and is restored after every method. |
+| GLOBAL | Shares a realm across compatible test classes in one Framework registry and destroys it when the registry closes. | Rejected for stateful resources. A class-specific baseline could otherwise carry setup changes into another class, depending on execution order. |
+
+For isolated test classes, use the default CLASS lifecycle with `@InjectSnapshot`.
+Use `@TestSetup` to create the realm's baseline fixture, then let snapshot restore cover direct admin API changes after each method.
+The snapshot covers the whole Keycloak database and supported caches, not just the injected realm.
+
+Do not combine `@InjectSnapshot` with a GLOBAL realm or other GLOBAL stateful snapshot participant.
+The extension fails fast with a message naming the conflicting resource.
+Use CLASS lifecycle for snapshot-managed fixtures; this gives each test class its own setup and baseline without depending on class execution order.
+
+`ManagedRealm` also provides helpers such as `updateWithCleanup()` and `updateUserWithCleanup()` that record cleanup operations for the end of each method.
+Those helpers work with CLASS and GLOBAL realms; with `@InjectSnapshot`, use CLASS lifecycle and rely on snapshot restore for database changes.
+Direct `realm.admin()` calls are not tracked by those helpers; snapshot restore still reverts their database changes.
+
+Without `@InjectSnapshot`, METHOD lifecycle remains useful when each method needs a newly created and destroyed realm.
+For resources included in a snapshot baseline, use CLASS lifecycle.
 
 Manual operations are available for tests that deliberately need to rebase or reset state during a test:
 
@@ -133,7 +155,7 @@ Child EOF/shutdown handling also closes Keycloak when the test process exits.
 ## Supported boundaries
 
 - Supported runtime versions and their server JDKs are listed in the [README](../README.md).
-- Use CLASS/GLOBAL resources; METHOD-scoped injected resources are rejected before capture.
+- Use CLASS resources; METHOD-scoped and GLOBAL stateful resources are rejected before capture.
   Do not call `dirty()` on managed resources while using a baseline: recreation conflicts with stable restored IDs.
 - JUnit parallel execution is rejected; asynchronous requests/jobs must finish before a method returns.
   Keycloak 23–26 use an HTTP request barrier, while 20–22 have no HTTP barrier.

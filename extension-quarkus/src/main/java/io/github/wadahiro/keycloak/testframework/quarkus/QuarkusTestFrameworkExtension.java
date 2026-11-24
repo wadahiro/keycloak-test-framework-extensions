@@ -19,6 +19,7 @@ import org.keycloak.testframework.injection.Supplier;
 import org.keycloak.testframework.injection.SupplierOrder;
 import org.keycloak.testframework.server.KeycloakServer;
 import org.keycloak.testframework.server.AbstractKeycloakServerSupplier;
+import org.keycloak.testframework.realm.ManagedRealm;
 
 public final class QuarkusTestFrameworkExtension implements TestFrameworkExtension {
     @Override
@@ -77,8 +78,15 @@ public final class QuarkusTestFrameworkExtension implements TestFrameworkExtensi
         public void onBeforeEach(InstanceContext<Snapshot, InjectSnapshot> context) {
             for (InstanceContext<?, ?> resource : context.getRegistry().getDeployedInstances()) {
                 if (resource.getLifeCycle() == LifeCycle.METHOD) {
-                    throw new IllegalArgumentException("H2 reset requires CLASS/GLOBAL resources; METHOD resource: "
+                    throw new IllegalArgumentException("@InjectSnapshot requires CLASS resources; METHOD resource: "
                             + resource.getRequestedValueType().getSimpleName());
+                }
+                if (resource.getLifeCycle() == LifeCycle.GLOBAL
+                        && (resource.getRequestedValueType() == ManagedRealm.class
+                                || resource.getValue() instanceof SnapshotParticipant)) {
+                    throw new IllegalArgumentException("@InjectSnapshot cannot be combined with GLOBAL stateful resource: "
+                            + resource.getRequestedValueType().getSimpleName()
+                            + ". Use CLASS lifecycle so each test class has an isolated baseline.");
                 }
                 if (resource.getValue() instanceof SnapshotParticipant participant) {
                     ((QuarkusSnapshot) context.getValue()).addParticipant(participant);

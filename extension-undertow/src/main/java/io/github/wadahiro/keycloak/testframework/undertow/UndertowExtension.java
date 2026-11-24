@@ -10,6 +10,7 @@ import org.keycloak.testframework.TestFrameworkExtension;
 import org.keycloak.testframework.admin.*;
 import org.keycloak.testframework.annotations.*;
 import org.keycloak.testframework.injection.*;
+import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.testframework.server.*;
 
 public final class UndertowExtension implements TestFrameworkExtension {
@@ -60,8 +61,15 @@ public final class UndertowExtension implements TestFrameworkExtension {
         @Override public void onBeforeEach(InstanceContext<Snapshot, InjectSnapshot> context) {
             for (InstanceContext<?, ?> resource : context.getRegistry().getDeployedInstances()) {
                 if (resource.getLifeCycle() == LifeCycle.METHOD) {
-                    throw new IllegalArgumentException("H2 reset requires CLASS/GLOBAL resources; METHOD resource: "
+                    throw new IllegalArgumentException("@InjectSnapshot requires CLASS resources; METHOD resource: "
                             + resource.getRequestedValueType().getSimpleName());
+                }
+                if (resource.getLifeCycle() == LifeCycle.GLOBAL
+                        && (resource.getRequestedValueType() == ManagedRealm.class
+                                || resource.getValue() instanceof SnapshotParticipant)) {
+                    throw new IllegalArgumentException("@InjectSnapshot cannot be combined with GLOBAL stateful resource: "
+                            + resource.getRequestedValueType().getSimpleName()
+                            + ". Use CLASS lifecycle so each test class has an isolated baseline.");
                 }
                 if (resource.getValue() instanceof SnapshotParticipant participant) {
                     ((UndertowSnapshot) context.getValue()).addParticipant(participant);

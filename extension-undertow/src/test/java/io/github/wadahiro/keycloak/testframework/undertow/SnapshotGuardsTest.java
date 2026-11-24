@@ -7,6 +7,7 @@ import io.github.wadahiro.keycloak.testframework.snapshot.Snapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.keycloak.testframework.injection.*;
+import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.testframework.server.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,5 +56,25 @@ class SnapshotGuardsTest {
         var context = context(registry, new UndertowProcessServer());
         var failure = assertThrows(IllegalArgumentException.class, () -> new UndertowExtension.SnapshotSupplier().onBeforeEach(context));
         assertTrue(failure.getMessage().contains("METHOD"));
+    }
+
+    @Test void rejectsGlobalRealmBeforeCapture() throws Exception {
+        TestRegistry registry = new TestRegistry();
+        Supplier<ManagedRealm, InjectSnapshot> globalRealmSupplier = new Supplier<>() {
+            public ManagedRealm getValue(InstanceContext<ManagedRealm, InjectSnapshot> c) { return null; }
+            public boolean compatible(InstanceContext<ManagedRealm, InjectSnapshot> a,
+                    RequestedInstance<ManagedRealm, InjectSnapshot> b) { return true; }
+            public LifeCycle getDefaultLifecycle() { return LifeCycle.GLOBAL; }
+        };
+        registry.getDeployedInstances().add(new InstanceContext<>(-1, registry, globalRealmSupplier,
+                annotation(), ManagedRealm.class, List.of()));
+        var context = context(registry, new UndertowProcessServer());
+
+        var failure = assertThrows(IllegalArgumentException.class,
+                () -> new UndertowExtension.SnapshotSupplier().onBeforeEach(context));
+
+        assertTrue(failure.getMessage().contains("GLOBAL"));
+        assertTrue(failure.getMessage().contains("ManagedRealm"));
+        assertTrue(failure.getMessage().contains("CLASS lifecycle"));
     }
 }

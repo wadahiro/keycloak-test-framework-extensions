@@ -8,7 +8,7 @@ Configure the matching runtime artifact under `keycloak-test-runtime-maven-plugi
 Use Java 11 for the 15.0.2 server, Java 17 for 20–24, Java 21 for 25, or Java 25 for 26, while keeping the integration-test runner isolated from existing unit-test JVMs.
 
 Inject `@InjectSnapshot Snapshot snapshot` from `io.github.wadahiro.keycloak.testframework.snapshot`.
-Keep fixture resources CLASS/GLOBAL; METHOD resources and JUnit parallel execution are rejected.
+Keep fixture resources CLASS; METHOD resources, GLOBAL stateful resources, and JUnit parallel execution are rejected.
 A baseline is captured after declarative resources and Framework `@TestSetup` complete, then restored after user `@AfterEach`, before the next `@BeforeEach`.
 `capture()` replaces the class baseline; `restore()` can reset immediately within a method.
 Do not call managed-resource `dirty()` or perform schema changes while using this mode.

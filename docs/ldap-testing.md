@@ -74,7 +74,7 @@ Calling `snapshot.capture()` manually replaces both the directory and database b
 After each test method, the LDAP snapshot is restored before Keycloak's H2 restore clears Keycloak caches.
 This keeps external LDAP entries, the LDAP provider and mapper configuration, and imported local users on the same baseline.
 
-Use CLASS or GLOBAL lifecycle for the LDAP server and other fixtures when using snapshot reset.
+Use CLASS lifecycle for the LDAP server and other fixtures when using snapshot reset.
 The default LDAP server lifecycle is CLASS.
 Do not run tests in parallel against the shared Keycloak server.
 

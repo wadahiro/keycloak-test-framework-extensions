@@ -41,6 +41,9 @@ jobs:
           echo "Priming the dynamically selected JUnit Platform provider"
           mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
             -Dartifact=org.apache.maven.surefire:surefire-junit-platform:3.5.4
+          echo "Priming the JUnit Platform launcher used by the Java 11 unit-test module"
+          mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+            -Dartifact=org.junit.platform:junit-platform-launcher:1.10.3
 
   test:
     name: Keycloak ${{ matrix.keycloak }} / server JDK ${{ matrix.server_java }}

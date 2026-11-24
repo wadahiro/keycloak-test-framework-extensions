@@ -1,3 +1,20 @@
+## [0.2.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.1.0...v0.2.0) (2026-11-24)
+
+### ⚠ BREAKING CHANGES
+
+* **runtime:** Keycloak 20–26 now use the official Quarkus bootstrap through the Quarkus extension and matching runtime artifacts. The runtime Maven plugin selects kc.test.runtime.version, and Keycloak 15.0.2 is removed from the default build and CI matrix.
+
+### Features
+
+* **extensions:** verify custom SPI loading across runtimes ([a98107a](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/a98107a4d8b93931fc48ebf7e43dd6c5859d0987))
+* **runtime:** replace modern Undertow bootstrap with Quarkus ([2fc14d8](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/2fc14d8ee84de9a374d85c7e389b84344c5bfbda))
+
+### Bug Fixes
+
+* **ci:** prefetch JUnit platform launcher ([71418b1](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/71418b1854a2801d60a866c989aeaaf2b0597ca7))
+* **ci:** prefetch JUnit platform provider ([ad69898](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/ad6989840be997873ad0390beef1b4c9a7add2b0))
+* **quarkus:** stabilize integration test startup ([c898386](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/c8983862d03777e33697d192298dad3fe81c9cd8))
+
 ## [0.1.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.0.0...v0.1.0) (2026-11-21)
 
 ### ⚠ BREAKING CHANGES

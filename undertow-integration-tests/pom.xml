@@ -3,7 +3,7 @@
     <parent>
         <groupId>io.github.wadahiro.keycloak.testframework</groupId>
         <artifactId>keycloak-test-framework-extensions-parent</artifactId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.2.0</version>
     </parent>
     <artifactId>undertow-integration-tests</artifactId>
     <properties>

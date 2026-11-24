@@ -115,7 +115,7 @@ public final class QuarkusTestFrameworkExtension implements TestFrameworkExtensi
 
     private static String selectedVersion() {
         try {
-            return RuntimeDescriptor.select(org.keycloak.testframework.config.Config.get("kc.test.quarkus.version", null, String.class)).version();
+            return RuntimeDescriptor.select(null).version();
         } catch (java.io.IOException failure) {
             throw new IllegalStateException("Unable to read the prepared Keycloak runtime descriptor", failure);
         }

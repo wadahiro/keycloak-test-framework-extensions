@@ -8,19 +8,22 @@ mvn -pl runtime-classpath-maven-plugin,extension-quarkus,extension-snapshot,exte
 mvn -Pundertow15 -pl undertow-integration-tests -am install -DskipTests
 ```
 
-Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-quarkus:0.1.0-SNAPSHOT` to a separate integration-test module with test scope.
+Import `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-extensions-bom` in dependency management and omit versions on extension and Framework test dependencies.
+Set `keycloak-test-framework-extensions.version` once; `[0,)` selects the latest published release, while a fixed version makes builds repeatable.
+The extensions BOM imports the Keycloak Test Framework BOM used to build the extension.
+Add `keycloak-test-framework-quarkus` to a separate integration-test module with test scope.
 Configure one matching `keycloak-test-runtime-quarkus<major>` artifact as a dependency of `keycloak-test-runtime-maven-plugin`, not as a project dependency.
+Use the same version property for the runtime Maven plugin and its runtime artifact, which are not version-managed by the BOM.
 The runtime Maven plugin keeps server libraries outside the test and IDE classpaths.
 
-Import `org.keycloak.testframework:keycloak-test-framework-bom:26.8.2` in dependency management.
-Use the matching Framework BOM for the selected server version.
+The selected adapter automatically configures its `server` and `keycloak` suppliers.
+The runtime Maven plugin's selected runtime artifact determines the exact Keycloak version, so a separate version property is not needed.
+Set `KEYCLOAK_JAVA_HOME` to the server JDK, or use the extension-specific Java-home setting if the environment variable is not suitable.
 
-In `src/test/resources/keycloak-test.properties`:
+For optional Framework defaults such as headless browser selection, `src/test/resources/keycloak-test.properties` may contain:
 
 ```properties
-kc.test.server=quarkus-process
-kc.test.keycloak=quarkus-admin
-kc.test.quarkus.version=26.8.2
+kc.test.browser=chrome-headless
 ```
 
 Set `KEYCLOAK_JAVA_HOME` to the server JDK: 17 for Keycloak 20–24, 21 for 25, or 25 for 26.

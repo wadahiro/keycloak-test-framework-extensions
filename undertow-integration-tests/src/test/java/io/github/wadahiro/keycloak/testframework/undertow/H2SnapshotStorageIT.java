@@ -17,7 +17,7 @@ class H2SnapshotStorageIT {
     static Method restore, close;
     static Driver driver;
     @BeforeAll static void loadSelectedStorage() throws Exception {
-        RuntimeDescriptor runtime = RuntimeDescriptor.select(System.getProperty("kc.test.undertow.version"));
+        RuntimeDescriptor runtime = RuntimeDescriptor.select(null);
         java.net.URL[] runtimeJars = Arrays.stream(runtime.classpath().split(java.util.regex.Pattern.quote(java.io.File.pathSeparator)))
                 .map(Path::of).map(path -> {
                     try { return path.toUri().toURL(); }

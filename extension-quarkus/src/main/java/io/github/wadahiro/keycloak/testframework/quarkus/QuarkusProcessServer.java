@@ -54,7 +54,7 @@ public final class QuarkusProcessServer implements KeycloakServer {
         if (process != null) throw new IllegalStateException("Quarkus process has already been started");
         try {
             Path javaHome = configuredJavaHome();
-            RuntimeDescriptor runtime = RuntimeDescriptor.select(Config.get("kc.test.quarkus.version", null, String.class));
+            RuntimeDescriptor runtime = RuntimeDescriptor.select(null);
             String keycloakVersion = runtime.version();
             int serverJava = requiredJava(keycloakVersion);
             verifyServerJava(javaHome, serverJava, keycloakVersion);
@@ -74,7 +74,7 @@ public final class QuarkusProcessServer implements KeycloakServer {
             List<String> keycloakArgs = keycloakArgs(builder, keycloakVersion);
             ProviderSetup providers = providerSetup(builder);
             baseUrl = (tlsEnabled ? "https" : "http") + "://localhost:" + port;
-            runDirectory = Path.of(Config.get("kc.test.quarkus.work", Path.of(System.getProperty("java.io.tmpdir"),
+            runDirectory = Path.of(Config.get("kc.test.server.extension.quarkus.work", Path.of(System.getProperty("java.io.tmpdir"),
                     "keycloak-quarkus-runs").toString(), String.class));
             Files.createDirectories(runDirectory);
             runDirectory = Files.createTempDirectory(runDirectory, "quarkus-");
@@ -253,9 +253,9 @@ public final class QuarkusProcessServer implements KeycloakServer {
     }
 
     private Path configuredJavaHome() {
-        String configured = Config.get("kc.test.quarkus.java.home", System.getenv("KEYCLOAK_JAVA_HOME"), String.class);
+        String configured = Config.get("kc.test.server.extension.quarkus.java.home", System.getenv("KEYCLOAK_JAVA_HOME"), String.class);
         if (configured == null || configured.isBlank()) {
-            throw new IllegalArgumentException("Set KEYCLOAK_JAVA_HOME or kc.test.quarkus.java.home to JDK 25");
+            throw new IllegalArgumentException("Set KEYCLOAK_JAVA_HOME or kc.test.server.extension.quarkus.java.home to JDK 25");
         }
         return Path.of(configured);
     }

@@ -6,13 +6,14 @@ The plugin writes their absolute paths to `target/test-classes/META-INF/keycloak
 The Quarkus extension reads that descriptor and uses the official Quarkus bootstrap APIs to start Keycloak 20–26 in a separate JVM.
 The Undertow adapter uses the same prepared classpath to start Keycloak 15.0.2 through its version-specific bootstrap.
 
-Add the extension to the integration-test module's test dependencies and configure one runtime artifact under the Maven plugin's dependencies:
+After importing the extensions BOM and defining `keycloak-test-framework-extensions.version` as shown in [Getting started](getting-started.md), add the runtime Maven plugin to the build.
+The plugin and its runtime artifact are not managed as project dependencies by the BOM, so use that same property for both versions.
 
 ```xml
 <plugin>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-runtime-maven-plugin</artifactId>
-    <version>0.1.0</version>
+    <version>${keycloak-test-framework-extensions.version}</version>
     <executions>
         <execution>
             <id>prepare-keycloak-runtime</id>
@@ -26,7 +27,7 @@ Add the extension to the integration-test module's test dependencies and configu
         <dependency>
             <groupId>io.github.wadahiro.keycloak.testframework</groupId>
             <artifactId>keycloak-test-runtime-quarkus26</artifactId>
-            <version>0.1.0</version>
+            <version>${keycloak-test-framework-extensions.version}</version>
         </dependency>
     </dependencies>
 </plugin>
@@ -42,5 +43,4 @@ A standalone `keycloak-test-runtime:prepare` Maven goal also generates the descr
 Set the JUnit launch JRE independently from `KEYCLOAK_JAVA_HOME`, which selects the child server JDK.
 
 Use one runtime artifact per integration-test module.
-When `kc.test.runtime.version` is set, it must match the runtime artifact configured in the plugin.
-A mismatch or missing descriptor fails with a message pointing to the Maven plugin setup.
+A missing descriptor fails with a message pointing to the Maven plugin setup.

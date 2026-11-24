@@ -8,15 +8,18 @@ Each supported Keycloak version has a small runtime artifact. The extension and 
 ## Consumer setup
 
 Use a separate integration-test module, preserving existing Java 11 unit tests.
-Import the Framework BOM in that consumer module to align its transitive dependencies:
+Import the extensions BOM in that consumer module; it also imports the compatible Framework BOM and manages extension artifact versions:
 
 ```xml
+<properties>
+    <keycloak-test-framework-extensions.version>[0,)</keycloak-test-framework-extensions.version>
+</properties>
 <dependencyManagement>
     <dependencies>
         <dependency>
-            <groupId>org.keycloak.testframework</groupId>
-            <artifactId>keycloak-test-framework-bom</artifactId>
-            <version>26.8.2</version>
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+            <artifactId>keycloak-test-framework-extensions-bom</artifactId>
+            <version>${keycloak-test-framework-extensions.version}</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -26,22 +29,18 @@ Import the Framework BOM in that consumer module to align its transitive depende
     <dependency>
         <groupId>io.github.wadahiro.keycloak.testframework</groupId>
         <artifactId>keycloak-test-framework-quarkus</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
         <scope>test</scope>
     </dependency>
 </dependencies>
 ```
 
-The example above selects the Quarkus adapter. For Keycloak 15.0.2, use the Undertow extension and its runtime artifact in the separate integration-test module. Select the suppliers with Maven Failsafe `systemPropertyVariables` or equivalent system properties:
-
-```xml
-<kc.test.server>quarkus-process</kc.test.server>
-<kc.test.keycloak>quarkus-admin</kc.test.keycloak>
-```
+The example above selects the Quarkus adapter. For Keycloak 15.0.2, use the Undertow extension and its runtime artifact in the separate integration-test module.
+`[0,)` selects the latest published release; use `mvn -U` to refresh repository metadata, or set a fixed version for repeatable builds.
+Each adapter selects its `server` and `keycloak` suppliers by default; set those properties only to override that choice.
 
 Set the selected server JDK: Java 11 for 15.0.2, Java 17 for 20–24, Java 21 for 25, or Java 25 for 26.
-Configure the matching runtime adapter as a dependency of `keycloak-test-runtime-maven-plugin`; see [runtime setup](runtime-plugin.md). Use one runtime per integration-test module, and keep `kc.test.runtime.version` aligned with it when that property is set.
-`kc.test.quarkus.work` or `kc.test.undertow.work` optionally selects the directory retaining child process logs and run files. Maven keeps the resolved server libraries in the local repository.
+Configure the matching runtime adapter as a dependency of `keycloak-test-runtime-maven-plugin`; see [runtime setup](runtime-plugin.md). Use one runtime per integration-test module; its artifact selects the Keycloak version.
+`kc.test.server.extension.quarkus.work` or `kc.test.server.extension.undertow.work` optionally selects the directory retaining child process logs and run files. Maven keeps the resolved server libraries in the local repository.
 Admin credentials default to `admin` for both adapters.
 The selected server has GLOBAL lifecycle within one Framework registry/test JVM.
 Multiple Maven forks have independent servers and databases.
@@ -86,6 +85,13 @@ Class cleanup releases the baseline before the Framework removes that class's re
 A new class can capture its own fixture on the same running server.
 
 ## Combining snapshots with `@InjectRealm`
+
+The Keycloak Test Framework's [Cleanup best practices](https://github.com/keycloak/keycloak/blob/main/test-framework/docs/BEST_PRACTICES.md#cleanup) recommend `lifecycle=CLASS` for performance, with each method cleaning up its own changes.
+The guide notes that extensive cleanup can become expensive and harder to read, and suggests `lifecycle=METHOD` when that is the case.
+With `@ResetKeycloakState`, tests can keep a class-scoped realm while the extension automatically restores the captured database, supported caches, and registered snapshot participants after each method.
+That avoids writing per-test cleanup for covered state and avoids recreating the realm for every method.
+This is most useful when method-level changes are broad or made through direct admin API calls; restore time still depends on the amount of database state.
+The snapshot does not reset arbitrary external state; custom providers and other resources must implement `SnapshotParticipant` to join the restore.
 
 `@InjectRealm` supports METHOD, CLASS, and GLOBAL lifecycle.
 These lifecycles control when the Framework creates and destroys the injected realm resource; they do not each provide a full database rollback.

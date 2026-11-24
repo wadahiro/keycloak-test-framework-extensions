@@ -21,7 +21,7 @@ Keycloak 20–26 use the official Quarkus bootstrap, with JDK 17 for 20–24, JD
 
 Configure exactly one runtime artifact as a dependency of `keycloak-test-runtime-maven-plugin`, not as a project test dependency.
 Bind the plugin goal to `process-test-classes` so Maven and Failsafe runs prepare the child JVM classpath.
-Use `kc.test.runtime.version` to check the selected Keycloak version.
+The selected runtime artifact determines the Keycloak version; `kc.test.runtime.version` can optionally assert that selection.
 
 The GLOBAL server is shared within one Framework registry/test JVM.
 `@ResetKeycloakState` activates a CLASS-scoped managed snapshot through the selected server adapter's supplier; `@InjectSnapshot` is optional and exposes manual snapshot operations.

@@ -1,6 +1,7 @@
 # Testing browser login flows
 
 These APIs are intentionally Keycloak test helpers, not general-purpose OIDC or SAML client libraries. Their purpose is to exercise Keycloak realm/client/user configuration and custom Keycloak SPIs through a real browser authentication flow.
+The dependency examples omit versions because they are managed by the extensions BOM; see [Getting started](getting-started.md) for Maven setup.
 
 | Concern | OIDC | SAML |
 | --- | --- | --- |
@@ -44,11 +45,11 @@ class OidcBrowserLoginIT {
 }
 ```
 
-Add `org.keycloak.testframework:keycloak-test-framework-oauth:26.8.2` as a test dependency. Configure the OAuth client and test user with the Framework's `ClientConfig` and `UserConfig` interfaces.
+Add `org.keycloak.testframework:keycloak-test-framework-oauth` as a test dependency. Configure the OAuth client and test user with the Framework's `ClientConfig` and `UserConfig` interfaces.
 
 ## SAML
 
-Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-saml:0.1.0` as a test dependency. `@InjectSamlClient` creates a temporary SAML client, reads the realm's IdP metadata, generates a Redirect-binding AuthnRequest, runs the browser login, receives the POST-binding response on a local dynamic-port ACS, and validates the response signature and protocol fields before exposing the result.
+Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-saml` as a test dependency. `@InjectSamlClient` creates a temporary SAML client, reads the realm's IdP metadata, generates a Redirect-binding AuthnRequest, runs the browser login, receives the POST-binding response on a local dynamic-port ACS, and validates the response signature and protocol fields before exposing the result.
 
 ```java
 @KeycloakIntegrationTest

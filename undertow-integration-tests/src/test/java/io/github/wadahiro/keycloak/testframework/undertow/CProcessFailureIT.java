@@ -18,15 +18,15 @@ class CProcessFailureIT {
         } finally { server.stop(); }
     }
     @Test void rejectsWrongServerJdkBeforeStartingAChild() {
-        String previous = System.getProperty("kc.test.undertow.java.home");
+        String previous = System.getProperty("kc.test.server.extension.undertow.java.home");
         try {
-            System.setProperty("kc.test.undertow.java.home", System.getProperty("expected.server.java").equals("11") ? System.getProperty("java.home") : System.getProperty("unit.java.home"));
+            System.setProperty("kc.test.server.extension.undertow.java.home", System.getProperty("expected.server.java").equals("11") ? System.getProperty("java.home") : System.getProperty("unit.java.home"));
             UndertowProcessServer server = new UndertowProcessServer();
             assertThrows(IllegalStateException.class, () -> server.start(null, false));
             assertFalse(server.isRunning());
         } finally {
-            if (previous == null) System.clearProperty("kc.test.undertow.java.home");
-            else System.setProperty("kc.test.undertow.java.home", previous);
+            if (previous == null) System.clearProperty("kc.test.server.extension.undertow.java.home");
+            else System.setProperty("kc.test.server.extension.undertow.java.home", previous);
         }
     }
 }

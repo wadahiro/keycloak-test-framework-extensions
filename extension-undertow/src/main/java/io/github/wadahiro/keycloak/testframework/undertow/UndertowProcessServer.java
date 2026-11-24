@@ -22,7 +22,7 @@ public final class UndertowProcessServer implements KeycloakServer {
     private String url;
     private boolean failed;
 
-    public static String value(String name, String fallback) { return Config.get("kc.test.undertow." + name, fallback, String.class); }
+    public static String value(String name, String fallback) { return Config.get("kc.test.server.extension.undertow." + name, fallback, String.class); }
 
     @Override public synchronized void start(KeycloakServerConfigBuilder builder, boolean tlsEnabled) {
         if (tlsEnabled) throw new IllegalArgumentException("Undertow runtime supports its fixed HTTP/H2 configuration only");
@@ -30,7 +30,7 @@ public final class UndertowProcessServer implements KeycloakServer {
         try {
             RuntimeDescriptor runtime = RuntimeDescriptor.select(value("version", null));
             String homeValue = value("java.home", System.getenv("KEYCLOAK_JAVA_HOME"));
-            if (homeValue == null) throw new IllegalArgumentException("Set KEYCLOAK_JAVA_HOME or kc.test.undertow.java.home to the selected server JDK");
+            if (homeValue == null) throw new IllegalArgumentException("Set KEYCLOAK_JAVA_HOME or kc.test.server.extension.undertow.java.home to the selected server JDK");
             Path javaHome = Path.of(homeValue);
             Properties release = new Properties();
             try (Reader stream = Files.newBufferedReader(javaHome.resolve("release"))) { release.load(stream); }

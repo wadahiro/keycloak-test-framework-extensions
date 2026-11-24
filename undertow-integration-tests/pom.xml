@@ -87,10 +87,8 @@
                     <runOrder>alphabetical</runOrder>
                     <argLine>-Djava.util.logging.manager=org.jboss.logmanager.LogManager</argLine>
                     <systemPropertyVariables>
-                        <kc.test.server>undertow-process</kc.test.server>
-                        <kc.test.keycloak>undertow-admin</kc.test.keycloak>
-                        <kc.test.undertow.java.home>${keycloak.java.home}</kc.test.undertow.java.home>
-                        <kc.test.undertow.work>${project.build.directory}/undertow-runs</kc.test.undertow.work>
+                        <kc.test.server.extension.undertow.java.home>${keycloak.java.home}</kc.test.server.extension.undertow.java.home>
+                        <kc.test.server.extension.undertow.work>${project.build.directory}/undertow-runs</kc.test.server.extension.undertow.work>
                         <expected.server.version>${tested.keycloak.version}</expected.server.version>
                         <expected.server.java>${tested.server.java}</expected.server.java>
                         <unit.java.home>${unit.java.home}</unit.java.home>

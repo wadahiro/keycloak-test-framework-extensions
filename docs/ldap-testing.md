@@ -6,13 +6,13 @@ It is not a replacement for interoperability tests against Active Directory or a
 
 ## Add the test dependency
 
-Add this artifact to the integration-test module, alongside `keycloak-test-framework-quarkus`:
+Add this artifact to the integration-test module, alongside `keycloak-test-framework-quarkus`.
+Its version is managed by the extensions BOM described in [Getting started](getting-started.md).
 
 ```xml
 <dependency>
     <groupId>io.github.wadahiro.keycloak.testframework</groupId>
     <artifactId>keycloak-test-framework-ldap</artifactId>
-    <version>0.1.0</version>
     <scope>test</scope>
 </dependency>
 ```

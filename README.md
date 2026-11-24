@@ -18,33 +18,9 @@ Add the GitHub-hosted Maven repository to your integration-test module. Releases
 </repositories>
 ```
 
-Then follow the [Getting Started guide](docs/getting-started.md) to add the extension and matching runtime artifact to your Maven configuration.
+Then follow the [Getting Started guide](docs/getting-started.md) to choose a Keycloak version and configure its matching adapter, runtime artifact, and JDK.
 
-## Run against a Keycloak version
-
-Choose a supported Keycloak release and matching runtime artifact. For example, to test against Keycloak 24.0.5, configure `keycloak-test.properties` and the Maven runtime plugin as shown in the [Getting Started guide](docs/getting-started.md).
-Set `kc.test.quarkus.version` to the selected release and use its matching `keycloak-test-runtime-quarkus<major>` artifact; for Keycloak 15.0.2, select the Undertow adapter and runtime instead.
-
-```properties
-kc.test.server=quarkus-process
-kc.test.keycloak=quarkus-admin
-kc.test.quarkus.version=24.0.5
-```
-
-Tests use the Framework's regular integration-test API:
-
-```java
-@KeycloakIntegrationTest
-public class LoginIT {
-    @InjectRealm(lifecycle = LifeCycle.CLASS)
-    ManagedRealm realm;
-
-}
-```
-
-Use `@ResetKeycloakState` only when you want automatic database and fixture restoration between test methods. Snapshot reset is optional; the server version is selected in the same way with or without it.
-
-See [Getting Started](docs/getting-started.md) to configure the Maven repository and dependencies. The guides cover [OIDC and SAML browser login](docs/client-login-examples.md), [identity brokering](docs/broker-testing-design.md), [custom SPI testing](docs/custom-spi-testing.md), [LDAP federation](docs/ldap-testing.md), [state reset](docs/snapshot.md), and [IDE test execution](docs/ide-testing.md).
+Further guides cover [OIDC and SAML browser login](docs/client-login-examples.md), [identity brokering](docs/broker-testing-design.md), [custom SPI testing](docs/custom-spi-testing.md), [LDAP federation](docs/ldap-testing.md), [state reset](docs/snapshot.md), and [IDE test execution](docs/ide-testing.md).
 
 Apache-2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 This independent community extension was developed with assistance from OpenAI Codex.

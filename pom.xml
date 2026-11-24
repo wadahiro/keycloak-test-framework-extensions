@@ -14,6 +14,7 @@
         </license>
     </licenses>
     <modules>
+        <module>bom</module>
         <module>extension-snapshot</module>
         <module>extension-quarkus</module>
         <module>extension-saml</module>

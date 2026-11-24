@@ -99,5 +99,5 @@ public class AH2SnapshotIT {
             return response;
         }
     }
-    static Path work() { return Path.of(System.getProperty("kc.test.quarkus.work")); }
+    static Path work() { return Path.of(System.getProperty("kc.test.server.extension.quarkus.work")); }
 }

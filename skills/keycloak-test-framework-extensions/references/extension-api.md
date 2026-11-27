@@ -48,13 +48,16 @@ public final class ServerConfig implements KeycloakServerConfig {
 
 Then select it on the test class with `@KeycloakIntegrationTest(config = ServerConfig.class)`.
 The Quarkus adapter packages the compiled module as a provider JAR.
-The Undertow 15 adapter adds the compiled classes directory to its isolated server JVM classpath.
+The Undertow 15 adapter deploys the compiled classes directory in its isolated server JVM like a provider JAR.
 
 For a separately built SPI artifact, declare it in the server configuration with `config.dependency("groupId", "artifactId")` and make sure that artifact is resolvable from the Maven repository.
 Keep SPI development and Framework integration tests in separate Maven modules when they target different Keycloak API versions.
 
 The Quarkus adapter places registered provider JARs in its isolated server home before bootstrap.
-The Undertow 15 adapter resolves provider JARs into the child JVM classpath.
+The Undertow 15 adapter keeps provider JARs off the child JVM classpath and deploys them before Keycloak boots, as WildFly deploys a provider JAR present at startup.
+Classes are found parent first (Keycloak before the provider), while Keycloak registrations (`META-INF/services/org.keycloak.*`), `META-INF/keycloak-themes.json`, `theme/` and `theme-resources/` are read from the provider only.
+A provider factory with the same SPI and provider id as a built-in one replaces it, and the child `server.log` records each replacement as a `KCTF_PROVIDER OVERRIDE spi=... id=... provider=... replaces=...` line.
+Themes, theme resources and SPI definitions (`org.keycloak.provider.Spi`) in provider JARs are deployed with them; see `docs/custom-spi-testing.md`.
 Provider changes require a fresh server process.
 
 The Undertow 15 adapter consumes provider dependencies and `spiOption(spi, provider, key, value)` from `KeycloakServerConfigBuilder`; it writes each SPI option into the Keycloak 15 JSON configuration as `<spi>.<provider>.<key>` and rejects other server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.

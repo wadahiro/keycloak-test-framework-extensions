@@ -28,6 +28,15 @@ class CustomSpiIT {
     }
 
     @Test
+    void loadsSpiDefinedByTheProviderDependency() throws Exception {
+        var request = HttpRequest.newBuilder(URI.create(realm.getBaseUrl() + "/custom-test-spi/custom-spi")).GET().build();
+        var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(200, response.statusCode(), response.body());
+        assertEquals("custom-spi-provider-loaded", response.body());
+    }
+
+    @Test
     void passesSpiOptionsToTheProviderFactory() throws Exception {
         var request = HttpRequest.newBuilder(URI.create(realm.getBaseUrl() + "/custom-test-spi/config")).GET().build();
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());

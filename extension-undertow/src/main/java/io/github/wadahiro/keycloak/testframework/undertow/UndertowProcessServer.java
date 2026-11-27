@@ -51,8 +51,16 @@ public final class UndertowProcessServer implements KeycloakServer {
             }
             commandLine.add("--add-opens=java.base/java.util=ALL-UNNAMED");
             commandLine.add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED");
-            String providers = providerClasspath(builder);
-            String classpath = providers.isEmpty() ? runtime.classpath() : runtime.classpath() + File.pathSeparator + providers;
+            List<String> providers = providerPaths(builder);
+            if (!providers.isEmpty()) {
+                // Kept off -cp: the child deploys them like a WildFly deployment so they can replace built-in providers.
+                for (String entry : providers) {
+                    if (!Files.exists(Path.of(entry))) throw new IllegalStateException("Provider dependency is missing: " + entry);
+                }
+                Path providerList = run.resolve("provider-dependencies.txt");
+                Files.write(providerList, providers, StandardCharsets.UTF_8);
+                commandLine.add("-Dkctf.provider.dependencies=" + providerList);
+            }
             Map<String, String> spiOptions = spiOptions(builder);
             if (!spiOptions.isEmpty()) {
                 Path spiConfig = run.resolve("spi-options.properties");
@@ -62,7 +70,7 @@ public final class UndertowProcessServer implements KeycloakServer {
                 commandLine.add("-Dkctf.spi.options=" + spiConfig);
             }
             if (proxyHeaders(builder)) commandLine.add("-Dkctf.proxy.headers=xforwarded");
-            commandLine.addAll(List.of("-cp", classpath, runtime.mainClass(), run.toString()));
+            commandLine.addAll(List.of("-cp", runtime.classpath(), runtime.mainClass(), run.toString()));
             ProcessBuilder command = new ProcessBuilder(commandLine);
             command.environment().put("KCTF_RUNTIME_JAVA", Integer.toString(runtime.javaFeature()));
             command.environment().put("KCTF_ADMIN_USERNAME", value("admin.username", "admin"));
@@ -90,8 +98,8 @@ public final class UndertowProcessServer implements KeycloakServer {
     }
 
     @SuppressWarnings("unchecked")
-    private static String providerClasspath(KeycloakServerConfigBuilder builder) throws Exception {
-        if (builder == null) return "";
+    private static List<String> providerPaths(KeycloakServerConfigBuilder builder) throws Exception {
+        if (builder == null) return List.of();
         for (String fieldName : List.of("features", "featuresDisabled")) {
             var field = KeycloakServerConfigBuilder.class.getDeclaredField(fieldName);
             field.setAccessible(true);
@@ -118,7 +126,7 @@ public final class UndertowProcessServer implements KeycloakServer {
                 paths.add(resolver.invoke(null, groupId, artifactId).toString());
             }
         }
-        return String.join(File.pathSeparator, paths);
+        return paths;
     }
 
     /**

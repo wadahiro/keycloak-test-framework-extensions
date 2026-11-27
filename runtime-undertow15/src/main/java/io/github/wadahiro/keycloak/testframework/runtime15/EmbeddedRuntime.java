@@ -64,8 +64,11 @@ public class EmbeddedRuntime {
                     () -> new io.undertow.servlet.util.ImmediateInstanceHandle<>(new UndertowRequestFilter(null)))
                     .setAsyncSupported(true));
             info.addFilterUrlMapping("SessionFilter", "/*", DispatcherType.REQUEST);
+            // Pre-boot deployments: Keycloak loads them after its built-in providers, so they can replace them.
+            ProviderDeployment.deployListed();
             server.deploy(info);
             sessionFactory = KeycloakApplication.getSessionFactory();
+            ProviderDeployment.logOverrides(sessionFactory);
             KeycloakSession session = sessionFactory.create();
             try {
                 session.getTransactionManager().begin();
@@ -144,6 +147,10 @@ public class EmbeddedRuntime {
                         String[] parts = name.split("\\.", 3);
                         json.with(parts[0]).with(parts[1]).put(parts[2], options.getProperty(name));
                     }
+                }
+                if (ProviderDeployment.loader() != null) {
+                    // Lets Keycloak's built-in provider manager see SPI definitions shipped by provider dependencies.
+                    json.putArray("providers").add(ProviderSpiLoaderFactory.TYPE + ":dependencies");
                 }
                 Config.init(new JsonConfigProvider(json, new Properties()));
             } catch (Exception e) {

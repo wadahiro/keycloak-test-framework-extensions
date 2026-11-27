@@ -2,7 +2,7 @@
 
 Declare custom providers through the official Keycloak Test Framework server configuration.
 The extension consumes `dependency(...)` and `dependencyCurrentProject()` for both the Quarkus and Undertow 15 runtimes.
-The selected runtime adapter makes the provider visible to Keycloak: Quarkus registers it with its bootstrap and provider directory, while Undertow 15 adds it to the isolated server JVM classpath.
+The selected runtime adapter makes the provider visible to Keycloak: Quarkus registers it with its bootstrap and provider directory, while Undertow 15 deploys it in the isolated server JVM the way WildFly deploys a provider JAR (see [class loading on Undertow 15](#class-loading-and-built-in-providers-on-undertow-15)).
 
 ## Provider in the integration-test module
 
@@ -27,7 +27,7 @@ class CustomProviderIT {
 }
 ```
 
-The extension packages the module's compiled main classes as a provider for Quarkus; Undertow 15 places the classes directory on the isolated runtime classpath.
+The extension packages the module's compiled main classes as a provider for Quarkus; Undertow 15 deploys the classes directory like a provider JAR.
 Keep legacy SPI source and Framework integration tests in separate Maven modules when they require different Keycloak API versions.
 
 ## Provider published as a Maven artifact
@@ -42,8 +42,32 @@ public KeycloakServerConfigBuilder configure(KeycloakServerConfigBuilder config)
 ```
 
 The extension resolves the artifact and makes it available to the selected server runtime before startup.
-Quarkus places it in the isolated server's `providers` directory before its bootstrap build; Undertow 15 adds the artifact to the child JVM classpath.
+Quarkus places it in the isolated server's `providers` directory before its bootstrap build; Undertow 15 deploys the artifact in the child JVM before Keycloak boots.
 Provider JAR dependencies should follow Keycloak's provider packaging guidance; the extension does not shade or rewrite provider artifacts.
+
+## Class loading and built-in providers on Undertow 15
+
+Undertow 15 does not put provider dependencies on the child JVM's `-cp`.
+The child JVM loads them with a dedicated class loader whose parent is the runtime class loader, and registers each dependency as a Keycloak deployment before Keycloak boots, like a provider JAR in WildFly's `deployments` directory at startup:
+
+1. Classes are found parent first: Keycloak's own classes and libraries come from the runtime, and the dependency's classes from the dependency, as Keycloak modules are searched before a WildFly deployment's own classes.
+   All provider dependencies share the class loader, so a provider can use classes of another declared dependency.
+2. Keycloak provider registrations (`META-INF/services/org.keycloak.*`), `META-INF/keycloak-themes.json`, `theme/` and `theme-resources/` are read from the dependency itself, never from Keycloak's JARs.
+3. Keycloak loads its built-in providers first and the deployments after them.
+   A dependency's factory with the same SPI and provider id as a built-in factory replaces it, for example a `LoginFormsProviderFactory` with id `freemarker`, an `IdentityProviderFactory` with id `saml`, or an LDAP mapper factory with id `user-attribute-ldap-mapper`.
+
+Each replacement is logged in the child's `server.log` (under `kc.test.server.extension.undertow.work`), with one deployment line per dependency:
+
+```text
+KCTF_PROVIDER DEPLOY name=my-keycloak-provider-1.0.jar themes=true themeResources=false path=...
+KCTF_PROVIDER OVERRIDE spi=eventsListener id=jboss-logging provider=com.example.MyEventListenerProviderFactory replaces=org.keycloak.events.log.JBossLoggingEventListenerProviderFactory deployment=my-keycloak-provider-1.0.jar
+```
+
+Themes in a dependency (`META-INF/keycloak-themes.json` and `theme/<name>/<type>/`) and theme resources (`theme-resources/templates`, `theme-resources/messages`, `theme-resources/resources`) are deployed with it, as on WildFly: the themes are selectable by name, and theme resources extend every theme.
+Each dependency is one deployment named after its file name, so themes and theme resources from several dependencies do not hide each other.
+
+Keycloak 15 reads SPI definitions only through its built-in provider manager, so the adapter adds the definitions a dependency registers in `META-INF/services/org.keycloak.provider.Spi` to it; a dependency can define its own SPI and its providers.
+If two dependencies register the same SPI and provider id, the later dependency in the server configuration wins.
 
 ## Provider configuration
 

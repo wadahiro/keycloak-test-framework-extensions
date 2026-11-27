@@ -5,6 +5,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import org.keycloak.events.EventListenerProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
 
@@ -38,6 +39,24 @@ public final class CustomRealmResourceProvider implements RealmResourceProvider 
     @Produces(MediaType.TEXT_PLAIN)
     public String config() {
         return greeting;
+    }
+
+    /** A provider of the SPI the dependency defines itself. */
+    @GET
+    @Path("custom-spi")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String customSpi() {
+        return session.getProvider(FixtureSpi.FixtureProvider.class).describe();
+    }
+
+    /** Which factory serves the built-in {@code jboss-logging} event listener id, and the events the override recorded. */
+    @GET
+    @Path("event-listener")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String eventListener() {
+        var factory = session.getKeycloakSessionFactory().getProviderFactory(EventListenerProvider.class, "jboss-logging");
+        return "factory=" + factory.getClass().getName() + "\n"
+                + "events=" + String.join(",", OverridingEventListenerProviderFactory.EVENTS) + "\n";
     }
 
     /** What a provider sees of the request: the client address, one request header and the request's base URI. */

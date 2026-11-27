@@ -1,6 +1,6 @@
 ---
 name: keycloak-test-framework-extensions
-description: Use this repository's Keycloak Test Framework extensions to test browser login, SAML clients, OIDC/SAML identity brokering, LDAP federation, and isolated Keycloak runtimes with fast shared-state snapshots.
+description: Use this repository's Keycloak Test Framework extensions to test browser login, SAML clients, OIDC/SAML identity brokering, LDAP federation, reverse-proxy headers, and isolated Keycloak runtimes with fast shared-state snapshots.
 license: Apache-2.0
 metadata:
   runtime: JDK 25 runner with per-version isolated Keycloak server JDKs
@@ -32,6 +32,7 @@ Do not describe this as same-JVM embedded execution.
 5. Read [the broker testing guide](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
 6. Read [LDAP federation testing](../../docs/ldap-testing.md) when testing LDAP User Federation or LDAP storage mappers, including custom directory schema and `memberOf`-based group mapping.
 7. Read [browser login examples](../../docs/client-login-examples.md) when testing OIDC or SAML clients, including SAML clients imported with realm JSON and IdP-initiated SAML login.
+8. Read [testing behind a reverse proxy](../../docs/front-proxy-testing.md) when a provider depends on a header set by a reverse proxy or on the client address from `X-Forwarded-For`.
 
 Use separate Maven modules for Keycloak SPI development and Framework-based integration tests.
 The SPI module compiles against the target Keycloak API and its supported JDK; the integration-test module consumes the built SPI artifact and contains the modern Framework/JUnit tests.

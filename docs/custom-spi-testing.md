@@ -61,7 +61,9 @@ The provider factory reads the value from the `Config.Scope` given to `init`.
 Quarkus receives it as the `spi-<spi>--<provider>--<key>` server option.
 Undertow 15 writes it into the isolated server's JSON configuration under `<spi>.<provider>.<key>`, the place a `standalone.xml` `<spi>` element configures on a WildFly server; the names are used as written.
 Values are passed as text, which `Config.Scope` parses for `getInt`, `getLong` and `getBoolean`.
-Other server options and feature flags are rejected on Undertow 15.
+Apart from `proxy-headers=xforwarded` (see [testing behind a reverse proxy](front-proxy-testing.md)), other server options and feature flags are rejected on Undertow 15.
+
+For providers that read a request header set by a reverse proxy, or the client address from `X-Forwarded-For`, see [testing behind a reverse proxy](front-proxy-testing.md).
 
 The per-run Keycloak home is disposable, so provider changes are picked up by starting a new test server.
 The extension does not hot-deploy provider changes into an already-running GLOBAL server.

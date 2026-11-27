@@ -11,6 +11,7 @@ import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.testframework.server.KeycloakServerConfig;
 import org.keycloak.testframework.server.KeycloakServerConfigBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KeycloakIntegrationTest(config = CustomSpiIT.ProviderServerConfig.class)
 class CustomSpiIT {
@@ -33,6 +34,18 @@ class CustomSpiIT {
 
         assertEquals(200, response.statusCode(), response.body());
         assertEquals("configured-by-spi-option", response.body());
+    }
+
+    @Test
+    void ignoresForwardedHostUnlessProxyHeadersIsSet() throws Exception {
+        var request = HttpRequest.newBuilder(URI.create(realm.getBaseUrl() + "/custom-test-spi/request"))
+                .header("X-Forwarded-Host", "proxy.example.test").header("X-Forwarded-Port", "8443")
+                .header("X-Forwarded-Proto", "https").GET().build();
+        var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(200, response.statusCode(), response.body());
+        assertTrue(response.body().contains("base-uri=" + realm.getBaseUrl().replaceFirst("/realms/.*$", "/") + "\n"),
+                response.body());
     }
 
     public static class ProviderServerConfig implements KeycloakServerConfig {

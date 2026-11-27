@@ -61,6 +61,7 @@ public final class UndertowProcessServer implements KeycloakServer {
                 try (Writer out = Files.newBufferedWriter(spiConfig, StandardCharsets.UTF_8)) { properties.store(out, null); }
                 commandLine.add("-Dkctf.spi.options=" + spiConfig);
             }
+            if (proxyHeaders(builder)) commandLine.add("-Dkctf.proxy.headers=xforwarded");
             commandLine.addAll(List.of("-cp", classpath, runtime.mainClass(), run.toString()));
             ProcessBuilder command = new ProcessBuilder(commandLine);
             command.environment().put("KCTF_RUNTIME_JAVA", Integer.toString(runtime.javaFeature()));
@@ -95,7 +96,7 @@ public final class UndertowProcessServer implements KeycloakServer {
             var field = KeycloakServerConfigBuilder.class.getDeclaredField(fieldName);
             field.setAccessible(true);
             if (!((java.util.Collection<?>) field.get(builder)).isEmpty()) {
-                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies and SPI options only; unsupported setting: " + fieldName);
+                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies, SPI options and proxy-headers only; unsupported setting: " + fieldName);
             }
         }
         spiOptions(builder);
@@ -122,7 +123,8 @@ public final class UndertowProcessServer implements KeycloakServer {
 
     /**
      * The builder's {@code spiOption(spi, provider, key, value)} settings ({@code spi-<spi>--<provider>--<key>}), which
-     * Keycloak 15 reads from its JSON configuration as {@code <spi>.<provider>.<key>}; any other option is rejected.
+     * Keycloak 15 reads from its JSON configuration as {@code <spi>.<provider>.<key>}; {@code proxy-headers} is handled by {@link #proxyHeaders} and any other option
+     * is rejected.
      */
     @SuppressWarnings("unchecked")
     static Map<String, String> spiOptions(KeycloakServerConfigBuilder builder) throws Exception {
@@ -131,15 +133,34 @@ public final class UndertowProcessServer implements KeycloakServer {
         field.setAccessible(true);
         Map<String, String> spi = new LinkedHashMap<>();
         for (var option : ((Map<String, String>) field.get(builder)).entrySet()) {
+            if (option.getKey().equals(PROXY_HEADERS)) continue;
             var name = SPI_OPTION.matcher(option.getKey());
             if (!name.matches()) {
-                throw new IllegalArgumentException("Undertow 15 supports SPI options (spiOption) only; unsupported option: " + option.getKey());
+                throw new IllegalArgumentException("Undertow 15 supports SPI options (spiOption) and proxy-headers only; unsupported option: " + option.getKey());
             }
             spi.put(name.group(1) + "." + name.group(2) + "." + name.group(3), option.getValue());
         }
         return spi;
     }
 
+    /**
+     * Whether the builder sets {@code proxy-headers=xforwarded}, which makes the embedded Undertow server take the client
+     * address, host, port and scheme from {@code X-Forwarded-*} headers, like WildFly's {@code proxy-address-forwarding}.
+     */
+    @SuppressWarnings("unchecked")
+    static boolean proxyHeaders(KeycloakServerConfigBuilder builder) throws Exception {
+        if (builder == null) return false;
+        var field = KeycloakServerConfigBuilder.class.getDeclaredField("options");
+        field.setAccessible(true);
+        String value = ((Map<String, String>) field.get(builder)).get(PROXY_HEADERS);
+        if (value == null) return false;
+        if (!value.equals("xforwarded")) {
+            throw new IllegalArgumentException("Undertow 15 supports proxy-headers=xforwarded only; unsupported value: " + value);
+        }
+        return true;
+    }
+
+    private static final String PROXY_HEADERS = "proxy-headers";
     private static final java.util.regex.Pattern SPI_OPTION = java.util.regex.Pattern.compile("spi-([^.]+?)--([^.]+?)--([^.]+)");
 
     private void readOutput() {

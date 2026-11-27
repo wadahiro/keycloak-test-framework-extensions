@@ -53,6 +53,7 @@ class OidcBrowserLoginIT {
 Add `org.keycloak.testframework:keycloak-test-framework-oauth` and `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-auth-oidc` as test dependencies.
 Configure the OAuth client and test user with the Framework's `ClientConfig` and `UserConfig` interfaces.
 The adapter shares browser-flow interaction with SAML while preserving the Framework's OIDC token APIs.
+To run the same login through a reverse proxy that adds request headers or reports a client address, set `oauth.baseUrl(proxy.getBaseUrl())` on an injected front proxy; see [testing behind a reverse proxy](front-proxy-testing.md).
 
 ## SAML
 

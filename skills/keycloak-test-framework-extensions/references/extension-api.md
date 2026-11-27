@@ -3,7 +3,7 @@
 Install the required modules locally until artifacts are published:
 
 ```sh
-mvn -pl runtime-classpath-maven-plugin,extension-quarkus,extension-snapshot,extension-saml,extension-broker,extension-ldap,runtime-quarkus/26 -am install -DskipTests
+mvn -pl runtime-classpath-maven-plugin,extension-quarkus,extension-snapshot,extension-saml,extension-broker,extension-ldap,extension-proxy,runtime-quarkus/26 -am install -DskipTests
 # For the Keycloak 15.0.2 adapter and integration tests:
 mvn -Pundertow15 -pl undertow-integration-tests -am install -DskipTests
 ```
@@ -58,6 +58,7 @@ The Undertow 15 adapter resolves provider JARs into the child JVM classpath.
 Provider changes require a fresh server process.
 
 The Undertow 15 adapter consumes provider dependencies and `spiOption(spi, provider, key, value)` from `KeycloakServerConfigBuilder`; it writes each SPI option into the Keycloak 15 JSON configuration as `<spi>.<provider>.<key>` and rejects other server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.
+The one exception is `proxy-headers=xforwarded`, which enables Undertow's proxy address forwarding (see below).
 Run its integration tests with `mvn -Pundertow15 verify`, the Test Framework on JDK 25, and `KEYCLOAK_JAVA_HOME` set to JDK 11.
 
 The runtime Maven plugin generates `target/test-classes/META-INF/keycloak-test-runtime.properties`; bind `prepare` to `process-test-classes` or run it before direct IDE JUnit launches.
@@ -85,3 +86,12 @@ Both return a flow whose `browser()` drives the login pages and whose `awaitResu
 End the user's sessions between logins in the same browser, or Keycloak's SSO session skips the login form.
 The test SP does not sign AuthnRequests, so use IdP-initiated login for clients that require client signatures; encrypted assertions and logout are not supported.
 See [browser login examples](../../../docs/client-login-examples.md#saml).
+
+## Reverse-proxy headers and client address
+
+When a provider decides by a header that a reverse proxy sets (for example a forwarded client certificate subject) or by the client address from `X-Forwarded-For`, add `keycloak-test-framework-proxy` with test scope and inject `@InjectFrontProxy FrontProxy`.
+The proxy runs in the test JVM and forwards to the managed server; point browsers and HTTP clients at `proxy.getBaseUrl()` (for the Framework OAuth client: `oauth.baseUrl(proxy.getBaseUrl())`).
+`proxy.header(name, value)` and `proxy.clientAddress(address)` apply to the following requests of the current test and are reset before each test.
+Set `option("proxy-headers", "xforwarded")` in the server configuration so Keycloak trusts the forwarded headers: Keycloak 24–26 receive it as written, the Quarkus adapter translates it to `proxy=edge` for 20–23, and the Undertow 15 adapter enables Undertow proxy address forwarding.
+Use a private client address for browser logins, because the default realm SSL requirement demands HTTPS from public addresses and the proxy serves HTTP.
+See the [reverse-proxy testing guide](../../../docs/front-proxy-testing.md).

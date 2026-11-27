@@ -11,6 +11,8 @@ import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.testframework.server.KeycloakServerConfig;
 import org.keycloak.testframework.server.KeycloakServerConfigBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KeycloakIntegrationTest(config = CustomSpiIT.ProviderServerConfig.class)
 class CustomSpiIT {
@@ -24,6 +26,19 @@ class CustomSpiIT {
 
         assertEquals(200, response.statusCode(), response.body());
         assertEquals("custom-quarkus-spi-loaded", response.body());
+    }
+
+    @Test
+    void ignoresForwardedHeadersUnlessProxyHeadersIsSet() throws Exception {
+        var request = HttpRequest.newBuilder(URI.create(realm.getBaseUrl() + "/custom-test-spi/request"))
+                .header("X-Forwarded-For", "203.0.113.10").header("X-Forwarded-Host", "proxy.example.test")
+                .header("X-Forwarded-Port", "8443").header("X-Forwarded-Proto", "https").GET().build();
+        var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(200, response.statusCode(), response.body());
+        assertFalse(response.body().contains("203.0.113.10"), response.body());
+        assertTrue(response.body().contains("base-uri=" + realm.getBaseUrl().replaceFirst("/realms/.*$", "/") + "\n"),
+                response.body());
     }
 
     public static class ProviderServerConfig implements KeycloakServerConfig {

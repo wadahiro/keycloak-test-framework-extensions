@@ -69,6 +69,7 @@ public final class QuarkusProcessServer implements KeycloakServer {
             if (quarkusMajor >= 26) {
                 setDefaultOption(builder, "spi-timer--provider", "snapshot-barrier");
             }
+            mapProxyHeaders(builder, quarkusMajor);
             builder.option("http-port", Integer.toString(httpPort));
             if (tlsEnabled) builder.option("https-port", Integer.toString(httpsPort));
             List<String> keycloakArgs = keycloakArgs(builder, keycloakVersion);
@@ -125,6 +126,25 @@ public final class QuarkusProcessServer implements KeycloakServer {
                 && !arg.startsWith("--bootstrap-admin-username=")
                 && !arg.startsWith("--bootstrap-admin-password=")
                 && !arg.startsWith("--shutdown-delay=") && !arg.startsWith("--shutdown-timeout=")).toList();
+    }
+
+    /**
+     * Keycloak 24 introduced {@code proxy-headers}; Keycloak 20–23 only accept {@code proxy}, whose {@code edge} mode
+     * trusts the forwarded headers on a plain HTTP listener. The test configuration can therefore always use
+     * {@code proxy-headers}, which is translated for the older releases unless {@code proxy} is set explicitly.
+     */
+    @SuppressWarnings("unchecked")
+    static void mapProxyHeaders(KeycloakServerConfigBuilder builder, int keycloakMajor) throws Exception {
+        if (keycloakMajor >= 24) return;
+        Field optionsField = KeycloakServerConfigBuilder.class.getDeclaredField("options");
+        optionsField.setAccessible(true);
+        Map<String, String> options = (Map<String, String>) optionsField.get(builder);
+        String proxyHeaders = options.remove("proxy-headers");
+        if (proxyHeaders == null) return;
+        if (!proxyHeaders.equals("xforwarded") && !proxyHeaders.equals("forwarded")) {
+            throw new IllegalArgumentException("Unsupported proxy-headers value: " + proxyHeaders);
+        }
+        options.putIfAbsent("proxy", "edge");
     }
 
     @SuppressWarnings("unchecked")

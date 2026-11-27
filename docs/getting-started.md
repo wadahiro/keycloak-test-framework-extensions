@@ -119,7 +119,21 @@ For tests where Keycloak brokers authentication to an external OIDC or SAML prov
 </dependency>
 ```
 
-See [OIDC and SAML login examples](client-login-examples.md) and the [broker authentication test guide](broker-testing-design.md) for browser-flow examples and IdP fixtures. Keep integration tests in a separate Maven module from applications or SPI providers compiled against older Keycloak APIs. Test-scoped Framework dependencies do not affect the main source compile classpath, but they are present on the integration test compile and runtime classpaths and can conflict with old Keycloak types if test sources compile the SPI implementation in the same module.
+See [OIDC and SAML login examples](client-login-examples.md) and the [broker authentication test guide](broker-testing-design.md) for browser-flow examples and IdP fixtures.
+
+For providers that depend on a header set by a reverse proxy or on the client address from `X-Forwarded-For`, add the front proxy:
+
+```xml
+<dependency>
+    <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+    <artifactId>keycloak-test-framework-proxy</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+See [testing behind a reverse proxy](front-proxy-testing.md) for the server option and the proxy API.
+
+Keep integration tests in a separate Maven module from applications or SPI providers compiled against older Keycloak APIs. Test-scoped Framework dependencies do not affect the main source compile classpath, but they are present on the integration test compile and runtime classpaths and can conflict with old Keycloak types if test sources compile the SPI implementation in the same module.
 
 After importing the BOM and defining the version property above, add the runtime Maven plugin to the build's `<plugins>` section.
 The plugin and its runtime artifact are not managed as project dependencies by the BOM, so use the same version property for both.

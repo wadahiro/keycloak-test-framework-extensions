@@ -32,6 +32,8 @@ import org.keycloak.services.filters.AbstractRequestFilter;
 
 public class UndertowRequestFilter extends AbstractRequestFilter implements Filter {
 
+    private static final boolean PROXY_HEADERS = "xforwarded".equals(System.getProperty("kctf.proxy.headers"));
+
     private final KeycloakSessionFactory factory;
 
     public UndertowRequestFilter(KeycloakSessionFactory factory) {
@@ -59,7 +61,8 @@ public class UndertowRequestFilter extends AbstractRequestFilter implements Filt
             public String getRemoteAddr() {
                 String forwardedFor = request.getHeader("X-Forwarded-For");
 
-                if (forwardedFor != null) {
+                // With proxy-headers, Undertow's ProxyPeerAddressHandler has already resolved the client address.
+                if (forwardedFor != null && !PROXY_HEADERS) {
                     return forwardedFor;
                 }
 

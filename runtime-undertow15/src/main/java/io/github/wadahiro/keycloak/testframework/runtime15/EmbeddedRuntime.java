@@ -25,6 +25,7 @@ import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.undertow.Undertow;
+import io.undertow.server.handlers.ProxyPeerAddressHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DefaultServletConfig;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -53,6 +54,10 @@ public class EmbeddedRuntime {
                     .setClassLoader(getClass().getClassLoader()).setContextPath("/auth")
                     .setDeploymentName("Keycloak15Embedded").setDefaultEncoding("UTF-8")
                     .setDefaultServletConfig(new DefaultServletConfig(true));
+            if ("xforwarded".equals(System.getProperty("kctf.proxy.headers"))) {
+                // WildFly's proxy-address-forwarding: X-Forwarded-For/-Host/-Proto/-Port set the client address and request URL.
+                info.addInitialHandlerChainWrapper(ProxyPeerAddressHandler::new);
+            }
             info.addFilter(Servlets.filter("SnapshotBarrier", QuiescentFilter.class).setAsyncSupported(true));
             info.addFilterUrlMapping("SnapshotBarrier", "/*", DispatcherType.REQUEST);
             info.addFilter(Servlets.filter("SessionFilter", UndertowRequestFilter.class,

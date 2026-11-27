@@ -22,6 +22,7 @@
         <module>extension-saml</module>
         <module>extension-broker</module>
         <module>extension-ldap</module>
+        <module>extension-proxy</module>
         <module>examples/java11-unit-tests</module>
         <module>runtime-classpath-maven-plugin</module>
     </modules>

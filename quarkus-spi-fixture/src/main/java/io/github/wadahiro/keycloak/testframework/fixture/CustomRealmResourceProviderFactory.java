@@ -11,7 +11,7 @@ public final class CustomRealmResourceProviderFactory implements RealmResourcePr
 
     @Override
     public RealmResourceProvider create(KeycloakSession session) {
-        return new CustomRealmResourceProvider();
+        return new CustomRealmResourceProvider(session);
     }
 
     @Override

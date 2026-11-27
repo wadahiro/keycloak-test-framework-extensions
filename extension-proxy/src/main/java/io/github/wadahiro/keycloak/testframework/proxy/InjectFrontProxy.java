@@ -13,4 +13,16 @@ import org.keycloak.testframework.injection.LifeCycle;
 public @interface InjectFrontProxy {
     LifeCycle lifecycle() default LifeCycle.CLASS;
     String ref() default "";
+
+    /** Listen on HTTPS with a self-signed certificate generated for this proxy, and forward {@code X-Forwarded-Proto: https}. */
+    boolean tls() default false;
+
+    /** Whether to request a client certificate; requires {@link #tls()}. */
+    FrontProxy.ClientAuth clientAuth() default FrontProxy.ClientAuth.NONE;
+
+    /** Request header that carries the presented client certificate's subject DN (RFC 2253); empty forwards none. */
+    String clientCertificateSubjectHeader() default "";
+
+    /** Request header that carries the presented client certificate as URL-encoded PEM; empty forwards none. */
+    String clientCertificateHeader() default "";
 }

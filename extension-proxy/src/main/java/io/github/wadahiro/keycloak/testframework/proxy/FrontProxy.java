@@ -3,11 +3,17 @@ package io.github.wadahiro.keycloak.testframework.proxy;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,8 +24,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLPeerUnverifiedException;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsExchange;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 
 /**
  * A reverse proxy in the test JVM that forwards HTTP requests to the managed Keycloak server.
@@ -29,8 +43,36 @@ import com.sun.net.httpserver.HttpServer;
  * test configures. Browsers and HTTP clients use {@link #getBaseUrl()} instead of the server's own URL. Keycloak must
  * be configured to trust the forwarded headers ({@code proxy-headers=xforwarded}) so that it reports the forwarded
  * client address and builds its redirects, form actions and cookies for the proxy's address. Bodies are not rewritten.
+ *
+ * <p>With TLS the proxy listens on HTTPS with a self-signed certificate generated for this instance, terminates TLS and
+ * forwards plain HTTP with {@code X-Forwarded-Proto: https}. It can request a client certificate and forward its
+ * subject and PEM encoding in request headers, as a proxy that terminates mutual TLS does.
  */
 public final class FrontProxy implements AutoCloseable {
+    /** Whether the proxy requests a client certificate during the TLS handshake. */
+    public enum ClientAuth {
+        /** No client certificate is requested. */
+        NONE,
+        /** A client certificate is requested; the handshake also succeeds without one. */
+        WANT,
+        /** A client certificate is required; the handshake fails without one. */
+        NEED
+    }
+
+    /** How the proxy listens and what it derives from a client certificate. */
+    record Settings(boolean tls, ClientAuth clientAuth, String clientCertificateSubjectHeader, String clientCertificateHeader) {
+        static final Settings HTTP = new Settings(false, ClientAuth.NONE, "", "");
+
+        Settings {
+            if (!tls && clientAuth != ClientAuth.NONE) throw new IllegalArgumentException("Client certificates require tls = true");
+        }
+
+        static Settings of(InjectFrontProxy annotation) {
+            return new Settings(annotation.tls(), annotation.clientAuth(), annotation.clientCertificateSubjectHeader(),
+                    annotation.clientCertificateHeader());
+        }
+    }
+
     /** Request headers the proxy never forwards from the client: hop-by-hop headers, and those the proxy sets itself. */
     private static final Set<String> DROPPED_REQUEST_HEADERS = Set.of("connection", "keep-alive", "proxy-connection",
             "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade", "host", "content-length", "expect",
@@ -43,19 +85,27 @@ public final class FrontProxy implements AutoCloseable {
 
     private final String targetOrigin;
     private final String basePath;
+    private final Settings settings;
     private final HttpServer server;
     private final ExecutorService executor;
     private final HttpClient client;
     private final String origin;
+    private final KeyStore serverKeys;
     private final Map<String, Header> headers = new LinkedHashMap<>();
     private final Set<String> strippedHeaders = new LinkedHashSet<>();
     private String clientAddress;
 
     FrontProxy(String targetBaseUrl) {
+        this(targetBaseUrl, Settings.HTTP);
+    }
+
+    FrontProxy(String targetBaseUrl, Settings settings) {
+        this.settings = settings;
         URI target = URI.create(targetBaseUrl);
         targetOrigin = target.getScheme() + "://" + target.getRawAuthority();
         String path = target.getRawPath() == null ? "" : target.getRawPath();
         basePath = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+        serverKeys = settings.tls() ? Certificates.selfSigned("CN=localhost,O=Keycloak Test Front Proxy", true) : null;
         AtomicInteger threads = new AtomicInteger();
         executor = Executors.newCachedThreadPool(task -> {
             Thread thread = new Thread(task, "keycloak-front-proxy-" + threads.incrementAndGet());
@@ -65,7 +115,23 @@ public final class FrontProxy implements AutoCloseable {
         client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).executor(executor).build();
         try {
-            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            InetSocketAddress address = new InetSocketAddress("127.0.0.1", 0);
+            if (settings.tls()) {
+                HttpsServer https = HttpsServer.create(address, 0);
+                SSLContext context = Certificates.serverContext(serverKeys);
+                https.setHttpsConfigurator(new HttpsConfigurator(context) {
+                    @Override
+                    public void configure(HttpsParameters parameters) {
+                        SSLParameters ssl = context.getDefaultSSLParameters();
+                        ssl.setWantClientAuth(settings.clientAuth() == ClientAuth.WANT);
+                        if (settings.clientAuth() == ClientAuth.NEED) ssl.setNeedClientAuth(true);
+                        parameters.setSSLParameters(ssl);
+                    }
+                });
+                server = https;
+            } else {
+                server = HttpServer.create(address, 0);
+            }
         } catch (IOException failure) {
             client.close();
             executor.shutdownNow();
@@ -74,7 +140,7 @@ public final class FrontProxy implements AutoCloseable {
         server.createContext("/", this::forward);
         server.setExecutor(executor);
         server.start();
-        origin = "http://127.0.0.1:" + server.getAddress().getPort();
+        origin = (settings.tls() ? "https" : "http") + "://127.0.0.1:" + server.getAddress().getPort();
     }
 
     /** The proxy URL that corresponds to the Keycloak server's base URL, for example {@code http://127.0.0.1:41234/auth}. */
@@ -85,9 +151,33 @@ public final class FrontProxy implements AutoCloseable {
 
     public int getPort() { return server.getAddress().getPort(); }
 
+    public boolean isTls() { return settings.tls(); }
+
+    /** The proxy's self-signed server certificate, issued for {@code 127.0.0.1} and {@code localhost}. */
+    public X509Certificate getCertificate() {
+        requireTls();
+        return Certificates.certificate(serverKeys);
+    }
+
+    /** A PKCS #12 trust store holding {@link #getCertificate()}. */
+    public KeyStore getTrustStore() {
+        return Certificates.trustStore(getCertificate());
+    }
+
+    /** A client TLS context that trusts the proxy, for example for {@code HttpClient.newBuilder().sslContext(...)}. */
+    public SSLContext sslContext() {
+        return Certificates.clientContext(getTrustStore(), null);
+    }
+
+    /** A client TLS context that trusts the proxy and presents {@code certificate} when the proxy requests one. */
+    public SSLContext sslContext(ClientCertificate certificate) {
+        return Certificates.clientContext(getTrustStore(), certificate.getKeyStore());
+    }
+
     /**
      * Adds {@code name: value} to the following forwarded requests, replacing a header of that name sent by the client
-     * or set by the proxy. Calling it again with the same name replaces the configured value.
+     * or set by the proxy, including a client certificate header. Calling it again with the same name replaces the
+     * configured value.
      */
     public synchronized FrontProxy header(String name, String value) {
         if (name == null || name.isBlank() || value == null) throw new IllegalArgumentException("Header name and value are required");
@@ -133,6 +223,10 @@ public final class FrontProxy implements AutoCloseable {
         executor.shutdownNow();
     }
 
+    private void requireTls() {
+        if (!settings.tls()) throw new IllegalStateException("The front proxy serves plain HTTP; inject it with tls = true");
+    }
+
     private void forward(HttpExchange exchange) throws IOException {
         try {
             Map<String, Header> configured;
@@ -140,8 +234,12 @@ public final class FrontProxy implements AutoCloseable {
             String forwardedFor;
             synchronized (this) {
                 configured = Map.copyOf(headers);
-                stripped = Set.copyOf(strippedHeaders);
+                stripped = new LinkedHashSet<>(strippedHeaders);
                 forwardedFor = clientAddress;
+            }
+            // The proxy owns its certificate headers: a client must not be able to supply them.
+            for (String name : List.of(settings.clientCertificateSubjectHeader(), settings.clientCertificateHeader())) {
+                if (!name.isEmpty()) stripped.add(name.toLowerCase(Locale.ROOT));
             }
             URI requested = exchange.getRequestURI();
             String query = requested.getRawQuery();
@@ -159,8 +257,17 @@ public final class FrontProxy implements AutoCloseable {
             request.setHeader("X-Forwarded-For", forwardedFor != null ? forwardedFor
                     : exchange.getRemoteAddress().getAddress().getHostAddress());
             request.setHeader("X-Forwarded-Host", host != null ? host : "127.0.0.1:" + getPort());
-            request.setHeader("X-Forwarded-Proto", "http");
+            request.setHeader("X-Forwarded-Proto", settings.tls() ? "https" : "http");
             request.setHeader("X-Forwarded-Port", Integer.toString(getPort()));
+            X509Certificate presented = clientCertificate(exchange);
+            if (presented != null) {
+                if (!settings.clientCertificateSubjectHeader().isEmpty()) {
+                    request.setHeader(settings.clientCertificateSubjectHeader(), presented.getSubjectX500Principal().getName());
+                }
+                if (!settings.clientCertificateHeader().isEmpty()) {
+                    request.setHeader(settings.clientCertificateHeader(), escapedPem(presented));
+                }
+            }
             for (Header header : configured.values()) request.setHeader(header.name(), header.value());
 
             HttpResponse<byte[]> response = client.send(request.build(), HttpResponse.BodyHandlers.ofByteArray());
@@ -177,11 +284,29 @@ public final class FrontProxy implements AutoCloseable {
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
             badGateway(exchange, failure);
-        } catch (IOException | RuntimeException failure) {
+        } catch (IOException | CertificateEncodingException | RuntimeException failure) {
             badGateway(exchange, failure);
         } finally {
             exchange.close();
         }
+    }
+
+    private static X509Certificate clientCertificate(HttpExchange exchange) {
+        if (!(exchange instanceof HttpsExchange https)) return null;
+        try {
+            Certificate[] chain = https.getSSLSession().getPeerCertificates();
+            return chain.length > 0 && chain[0] instanceof X509Certificate certificate ? certificate : null;
+        } catch (SSLPeerUnverifiedException noCertificate) {
+            return null;
+        }
+    }
+
+    /** The URL-encoded PEM form that, for example, nginx forwards as {@code $ssl_client_escaped_cert}. */
+    private static String escapedPem(X509Certificate certificate) throws CertificateEncodingException {
+        String pem = "-----BEGIN CERTIFICATE-----\n"
+                + Base64.getMimeEncoder(64, "\n".getBytes(StandardCharsets.US_ASCII)).encodeToString(certificate.getEncoded())
+                + "\n-----END CERTIFICATE-----\n";
+        return URLEncoder.encode(pem, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private static void badGateway(HttpExchange exchange, Exception failure) {

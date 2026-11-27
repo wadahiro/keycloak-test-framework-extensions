@@ -17,13 +17,15 @@ public final class FrontProxySupplier implements Supplier<FrontProxy, InjectFron
 
     @Override
     public FrontProxy getValue(InstanceContext<FrontProxy, InjectFrontProxy> context) {
-        return new FrontProxy(context.getDependency(KeycloakServer.class).getBaseUrl());
+        return new FrontProxy(context.getDependency(KeycloakServer.class).getBaseUrl(),
+                FrontProxy.Settings.of(context.getAnnotation()));
     }
 
     @Override
     public boolean compatible(InstanceContext<FrontProxy, InjectFrontProxy> a,
             RequestedInstance<FrontProxy, InjectFrontProxy> b) {
-        return a.getAnnotation().ref().equals(b.getAnnotation().ref());
+        return a.getAnnotation().ref().equals(b.getAnnotation().ref())
+                && FrontProxy.Settings.of(a.getAnnotation()).equals(FrontProxy.Settings.of(b.getAnnotation()));
     }
 
     /** Headers and the client address apply per test: each test starts from a plain forwarding proxy. */

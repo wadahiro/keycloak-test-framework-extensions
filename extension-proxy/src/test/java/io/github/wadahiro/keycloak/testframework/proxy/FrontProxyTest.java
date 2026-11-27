@@ -106,4 +106,44 @@ class FrontProxyTest {
     void rejectsHeadersTheHttpClientCannotSend() {
         assertThrows(IllegalArgumentException.class, () -> proxy.header("Host", "example.test"));
     }
+
+    @Test
+    void terminatesTlsAndForwardsTheClientCertificate() throws Exception {
+        String target = "http://127.0.0.1:" + backend.getAddress().getPort() + "/auth";
+        try (var tls = new FrontProxy(target, new FrontProxy.Settings(true, FrontProxy.ClientAuth.WANT,
+                "X-Client-Cert-Subject", "X-Client-Cert"))) {
+            assertEquals("https://127.0.0.1:" + tls.getPort() + "/auth", tls.getBaseUrl());
+            var certificate = ClientCertificate.generate("CN=alice,O=Example");
+            try (var withCertificate = HttpClient.newBuilder().sslContext(tls.sslContext(certificate)).build();
+                    var anonymous = HttpClient.newBuilder().sslContext(tls.sslContext()).build()) {
+                var lines = withCertificate.send(HttpRequest.newBuilder(URI.create(tls.getBaseUrl() + "/echo"))
+                        .header("X-Client-Cert-Subject", "CN=forged").GET().build(), HttpResponse.BodyHandlers.ofString())
+                        .body().lines().toList();
+                assertTrue(lines.contains("x-client-cert-subject=CN=alice,O=Example"), lines.toString());
+                assertTrue(lines.contains("x-forwarded-proto=https"), lines.toString());
+                assertTrue(lines.contains("x-forwarded-port=" + tls.getPort()), lines.toString());
+                assertTrue(lines.stream().anyMatch(line -> line.startsWith("x-client-cert=-----BEGIN%20CERTIFICATE-----%0A")),
+                        lines.toString());
+
+                var body = anonymous.send(HttpRequest.newBuilder(URI.create(tls.getBaseUrl() + "/echo"))
+                        .header("X-Client-Cert-Subject", "CN=forged").GET().build(), HttpResponse.BodyHandlers.ofString()).body();
+                assertFalse(body.contains("x-client-cert"), body);
+            }
+        }
+    }
+
+    @Test
+    void requiredClientCertificateRejectsAnonymousClients() throws Exception {
+        String target = "http://127.0.0.1:" + backend.getAddress().getPort() + "/auth";
+        try (var tls = new FrontProxy(target, new FrontProxy.Settings(true, FrontProxy.ClientAuth.NEED, "X-Client-Cert-Subject", ""));
+                var anonymous = HttpClient.newBuilder().sslContext(tls.sslContext()).build()) {
+            assertThrows(java.io.IOException.class, () -> anonymous.send(HttpRequest.newBuilder(URI.create(tls.getBaseUrl() + "/echo"))
+                    .GET().build(), HttpResponse.BodyHandlers.ofString()));
+        }
+    }
+
+    @Test
+    void rejectsClientCertificatesWithoutTls() {
+        assertThrows(IllegalArgumentException.class, () -> new FrontProxy.Settings(false, FrontProxy.ClientAuth.WANT, "", ""));
+    }
 }

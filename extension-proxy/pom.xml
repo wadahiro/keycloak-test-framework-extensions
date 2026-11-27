@@ -24,5 +24,17 @@
             <artifactId>keycloak-test-framework-core</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <!-- FrontProxyBrowser only: tests that drive a browser already depend on the Framework UI module. -->
+            <groupId>org.keycloak.testframework</groupId>
+            <artifactId>keycloak-test-framework-ui</artifactId>
+            <scope>compile</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.86</version>
+        </dependency>
     </dependencies>
 </project>

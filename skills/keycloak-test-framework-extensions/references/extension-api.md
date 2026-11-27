@@ -93,5 +93,8 @@ When a provider decides by a header that a reverse proxy sets (for example a for
 The proxy runs in the test JVM and forwards to the managed server; point browsers and HTTP clients at `proxy.getBaseUrl()` (for the Framework OAuth client: `oauth.baseUrl(proxy.getBaseUrl())`).
 `proxy.header(name, value)` and `proxy.clientAddress(address)` apply to the following requests of the current test and are reset before each test.
 Set `option("proxy-headers", "xforwarded")` in the server configuration so Keycloak trusts the forwarded headers: Keycloak 24–26 receive it as written, the Quarkus adapter translates it to `proxy=edge` for 20–23, and the Undertow 15 adapter enables Undertow proxy address forwarding.
-Use a private client address for browser logins, because the default realm SSL requirement demands HTTPS from public addresses and the proxy serves HTTP.
+Over plain HTTP, use a private client address for browser logins, because the default realm SSL requirement demands HTTPS from public addresses.
+`@InjectFrontProxy(tls = true)` terminates HTTPS with a per-proxy self-signed certificate and forwards `X-Forwarded-Proto: https`, so public addresses work.
+Trust it with `proxy.sslContext()` for HTTP clients, replace the Framework OAuth client's back-channel client with `oauth.httpClient().set(HttpClients.custom().setSSLContext(proxy.sslContext()).build())`, and call `FrontProxyBrowser.trust(browser, proxy)` for the `htmlunit` browser (`chrome-headless` already ignores certificate errors; headed Chrome and Firefox are unsupported).
+For mutual TLS set `clientAuth = WANT` or `NEED` and `clientCertificateSubjectHeader`/`clientCertificateHeader`; present a `ClientCertificate.generate(subject)` with `proxy.sslContext(certificate)` or, in `htmlunit`, `FrontProxyBrowser.presentClientCertificate(...)`, and simulate it for `chrome-headless` with `proxy.header(...)`.
 See the [reverse-proxy testing guide](../../../docs/front-proxy-testing.md).

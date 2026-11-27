@@ -1,3 +1,9 @@
+## [0.5.1](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.5.0...v0.5.1) (2026-11-27)
+
+### Bug Fixes
+
+* **release:** publish the Undertow 15 adapter and runtime ([0eaa19b](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/0eaa19bc897e98caf2f144c75ae0ed691a8a0c4d))
+
 ## [0.5.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.4.0...v0.5.0) (2026-11-27)
 
 ### Features

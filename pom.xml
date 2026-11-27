@@ -241,6 +241,8 @@
         <profile>
             <id>all-runtimes</id>
             <modules>
+                <module>runtime-undertow15</module>
+                <module>extension-undertow</module>
                 <module>runtime-quarkus</module>
                 <module>runtime-quarkus/20</module>
                 <module>runtime-quarkus/21</module>

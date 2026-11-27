@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 scripts=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+bash "$scripts/check-published-modules.sh"
 fixture=$(mktemp -d "${TMPDIR:-/tmp}/keycloak-release-test.XXXXXX")
 trap 'rm -rf "$fixture"' EXIT
 origin="$fixture/origin.git"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-extensions-parent</artifactId><version>0.5.0</version></parent>
+  <parent><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-extensions-parent</artifactId><version>0.5.1-SNAPSHOT</version></parent>
   <artifactId>keycloak-test-runtime-quarkus-parent</artifactId><packaging>pom</packaging>
   <properties><maven.compiler.release>17</maven.compiler.release><quarkus.bootstrap.version>3.40.1.1</quarkus.bootstrap.version><runtime.version>26.8.2</runtime.version><runtime.java>25</runtime.java></properties>
   <dependencies>

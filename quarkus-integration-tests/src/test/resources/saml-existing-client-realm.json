@@ -1,0 +1,67 @@
+{
+  "enabled": true,
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@example.test",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "alice-password",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "https://sp.example.test/saml/metadata",
+      "name": "Example SP",
+      "protocol": "saml",
+      "enabled": true,
+      "redirectUris": [
+        "https://sp.example.test/saml/acs"
+      ],
+      "attributes": {
+        "saml_assertion_consumer_url_post": "https://sp.example.test/saml/acs",
+        "saml_idp_initiated_sso_url_name": "example-sp",
+        "saml_idp_initiated_sso_relay_state": "/dashboard",
+        "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
+        "saml.client.signature": "false",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml.authnstatement": "true",
+        "saml_name_id_format": "email",
+        "saml_force_name_id_format": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "given name",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "firstName",
+            "friendly.name": "givenName",
+            "attribute.name": "givenName",
+            "attribute.nameformat": "Basic"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "https://portal.example.test/saml",
+      "name": "Example portal",
+      "protocol": "saml",
+      "enabled": true,
+      "attributes": {
+        "saml.server.signature": "true",
+        "saml.client.signature": "false"
+      }
+    }
+  ]
+}

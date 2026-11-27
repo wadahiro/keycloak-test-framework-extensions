@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -15,7 +16,8 @@ import com.sun.net.httpserver.HttpServer;
 final class SamlAcs implements AutoCloseable {
     private final HttpServer server;
     private final String url;
-    private final Map<String, CompletableFuture<String>> pending = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<Received>> pending = new java.util.concurrent.ConcurrentHashMap<>();
+    private final AtomicReference<CompletableFuture<Received>> unsolicited = new AtomicReference<>();
 
     SamlAcs() {
         try {
@@ -32,17 +34,34 @@ final class SamlAcs implements AutoCloseable {
         return url;
     }
 
-    CompletableFuture<String> register(String relayState) {
-        CompletableFuture<String> response = new CompletableFuture<>();
+    CompletableFuture<Received> register(String relayState) {
+        CompletableFuture<Received> response = new CompletableFuture<>();
         pending.put(relayState, response);
         return response;
     }
 
-    String await(String relayState, CompletableFuture<String> response, long timeout, TimeUnit unit) {
+    /**
+     * Registers the receiver for the next response that does not answer a pending SP-initiated request,
+     * as sent by IdP-initiated SSO. Only one unsolicited response can be awaited at a time.
+     */
+    CompletableFuture<Received> registerUnsolicited() {
+        CompletableFuture<Received> response = new CompletableFuture<>();
+        CompletableFuture<Received> previous = unsolicited.getAndSet(response);
+        if (previous != null) {
+            previous.completeExceptionally(new IllegalStateException("Superseded by a newer IdP-initiated login"));
+        }
+        return response;
+    }
+
+    Received await(String relayState, CompletableFuture<Received> response, long timeout, TimeUnit unit) {
         try {
             return response.get(timeout, unit);
         } catch (Exception e) {
-            pending.remove(relayState);
+            if (relayState != null) {
+                pending.remove(relayState);
+            } else {
+                unsolicited.compareAndSet(response, null);
+            }
             throw new IllegalStateException("Timed out waiting for SAML response at " + url, e);
         }
     }
@@ -56,12 +75,18 @@ final class SamlAcs implements AutoCloseable {
         Map<String, String> fields = decodeForm(form);
         String relayState = fields.get("RelayState");
         String response = fields.get("SAMLResponse");
-        CompletableFuture<String> future = relayState == null ? null : pending.remove(relayState);
-        if (future == null || response == null) {
+        if (relayState != null && relayState.isEmpty()) relayState = null;
+        if (response == null) {
+            respond(exchange, 400, "Missing SAMLResponse");
+            return;
+        }
+        CompletableFuture<Received> future = relayState == null ? null : pending.remove(relayState);
+        if (future == null) future = unsolicited.getAndSet(null);
+        if (future == null) {
             respond(exchange, 400, "Unknown SAML response");
             return;
         }
-        future.complete(response);
+        future.complete(new Received(response, relayState));
         respond(exchange, 200, "SAML response received. You may return to the test.");
     }
 
@@ -85,6 +110,8 @@ final class SamlAcs implements AutoCloseable {
             output.write(bytes);
         }
     }
+
+    record Received(String samlResponse, String relayState) {}
 
     @Override
     public void close() {

@@ -57,7 +57,7 @@ The adapter shares browser-flow interaction with SAML while preserving the Frame
 ## SAML
 
 Add `io.github.wadahiro.keycloak.testframework:keycloak-test-framework-saml` as a test dependency.
-`@InjectSamlClient` creates a temporary SAML client, reads the realm's IdP metadata, generates a Redirect-binding AuthnRequest, runs the browser login, receives the POST-binding response on a local dynamic-port ACS, and validates the response signature and protocol fields before exposing the result.
+By default, `@InjectSamlClient` creates a temporary SAML client, reads the realm's IdP metadata, generates a Redirect-binding AuthnRequest, runs the browser login, receives the POST-binding response on a local dynamic-port ACS, and validates the response signature and protocol fields before exposing the result.
 
 ```java
 @KeycloakIntegrationTest
@@ -116,7 +116,62 @@ SamlLoginResult result = flow.awaitResult(30, TimeUnit.SECONDS);
 
 For a custom authenticator or required action, create a Framework `AbstractPage` subclass for its screen and call `browser.page().createPage(YourPage.class)`, or use `browser.driver()` directly with Selenium. The flow helper does not assume a fixed sequence of screens; the test drives each expected step and waits for the final protocol response. OIDC tests start with `OidcAuthentication.startLogin()` and finish with `awaitAuthorizationResponse()`; token exchange remains on the injected Framework `OAuthClient`.
 
-The default SAML client requires Keycloak to sign its response and assertion and uses the realm's published signing certificate for validation. Provide a custom `ClientConfig` through `@InjectSamlClient(config = ...)` for client-specific settings. The current API focuses on SP-initiated login and assertion validation; SAML logout, encrypted assertions, and IdP-initiated login are outside its scope.
+The default SAML client requires Keycloak to sign its response and assertion and uses the realm's published signing certificate for validation. Provide a custom `ClientConfig` through `@InjectSamlClient(config = ...)` for client-specific settings.
+
+### Existing SAML clients from realm JSON
+
+A realm imported from JSON usually already contains its SAML clients, with their own entity IDs, ACS URLs, signing settings, NameID formats, and mappers.
+Set `@InjectSamlClient(clientId = ...)` to the client's entity ID to log in through that client instead of creating a temporary one.
+While the injected value is open, the extension adds its local ACS URL to the client's redirect URIs and sets it as the client's POST assertion consumer URL (`saml_assertion_consumer_url_post`) through the Admin API.
+It restores both values when the value is closed, which happens at the end of its lifecycle or when the test calls `close()`.
+It changes no other setting, so the response reflects the realm's own signing, NameID, and mapper configuration.
+`config` cannot be combined with `clientId`; change an existing client through the realm JSON or the Admin API.
+
+```java
+@KeycloakIntegrationTest
+class ExampleSpLoginIT {
+    @InjectRealm(fromJson = "/example-realm.json")
+    ManagedRealm realm;
+
+    @InjectSamlClient(clientId = "https://sp.example.test/saml/metadata")
+    SamlClient sp;
+
+    @Test
+    void spInitiatedLoginUsesTheRealmClient() {
+        SamlLoginResult result = sp.doLogin("alice", "alice-password");
+        assertEquals("alice@example.test", result.nameId());
+        assertEquals(List.of("Alice"), result.attributes().get("givenName"));
+    }
+}
+```
+
+### IdP-initiated login
+
+`startIdpInitiatedLogin()` opens `/realms/{realm}/protocol/saml/clients/{idpInitiatedSsoUrlName}`, using the client's `saml_idp_initiated_sso_url_name` attribute ("IdP-Initiated SSO URL name" in the admin console).
+After the test drives the login pages, `awaitResult(...)` receives the unsolicited response at the local ACS and validates it like an SP-initiated response, except that there is no `InResponseTo` to match.
+`result.relayState()` returns the RelayState Keycloak sent: the value passed to `startIdpInitiatedLogin(relayState)`, otherwise the client's `saml_idp_initiated_sso_relay_state`, or `null` when there is none.
+`doIdpInitiatedLogin(username, password)` is the short path for the username/password form.
+IdP-initiated login works for existing clients and for temporary clients whose `ClientConfig` sets `saml_idp_initiated_sso_url_name`.
+
+```java
+var flow = sp.startIdpInitiatedLogin();
+LoginPage loginPage = flow.browser().page().createPage(LoginPage.class);
+loginPage.fillLogin("alice", "alice-password");
+loginPage.submit();
+SamlLoginResult result = flow.awaitResult(30, TimeUnit.SECONDS);
+assertEquals("/dashboard", result.relayState());
+```
+
+A second login in the same browser reuses Keycloak's SSO session and skips the login form.
+To show the form again, end the user's sessions first, for example with `realm.admin().users().get(userId).logout()`.
+See `SamlExistingClientIT` in the integration-test modules for both flows against a client imported from realm JSON.
+
+### SAML limitations
+
+The test SP does not sign AuthnRequests.
+SP-initiated login therefore fails for a client that requires client signatures (`saml.client.signature`); use IdP-initiated login for such a client, since it sends no request.
+Every response must be signed at the response level, the assertion level, or both; the signature is validated against the realm's published signing certificate.
+SAML logout and encrypted assertions are outside the scope of this API.
 
 This helper validates the assertion before returning identity data, but it does not implement an application's session, authorization policy, or full production SP behavior. For application acceptance tests, run the application/SP stack and assert its own authenticated session and authorization decisions.
 

@@ -66,3 +66,18 @@ See the [runtime plugin guide](../../../docs/runtime-plugin.md), [snapshot guide
 For LDAP federation tests, add `keycloak-test-framework-ldap` with test scope.
 It starts an UnboundID in-memory LDAP server and restores its directory snapshot alongside the database baseline.
 See the [LDAP testing guide](../../../docs/ldap-testing.md).
+
+## SAML client login
+
+For SAML browser login, add `keycloak-test-framework-saml` with test scope and inject `@InjectSamlClient SamlClient`.
+Without `clientId`, it creates a temporary SAML client from `config`.
+When the realm already defines the SAML client, for example from `@InjectRealm(fromJson = "/example-realm.json")`, set `clientId` to its entity ID instead, such as `@InjectSamlClient(clientId = "https://sp.example.test/saml/metadata")`.
+The extension then adds its local ACS URL to that client's redirect URIs and POST assertion consumer URL through the Admin API, restores both when the value closes, and leaves signing, NameID, and mapper settings as the realm defines them.
+Prefer this over recreating the client in test code when the goal is to verify the realm's real client configuration.
+
+`startLogin()` runs SP-initiated login.
+`startIdpInitiatedLogin()` opens the client's IdP-initiated SSO URL (`saml_idp_initiated_sso_url_name`) and accepts the unsolicited response; `result.relayState()` exposes the RelayState Keycloak sent.
+Both return a flow whose `browser()` drives the login pages and whose `awaitResult(...)` validates the signed response.
+End the user's sessions between logins in the same browser, or Keycloak's SSO session skips the login form.
+The test SP does not sign AuthnRequests, so use IdP-initiated login for clients that require client signatures; encrypted assertions and logout are not supported.
+See [browser login examples](../../../docs/client-login-examples.md#saml).

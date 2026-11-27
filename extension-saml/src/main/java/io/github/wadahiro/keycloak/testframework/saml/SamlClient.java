@@ -27,27 +27,35 @@ public final class SamlClient implements AutoCloseable {
     private final SamlAcs acs;
     private final ManagedWebDriver browser;
     private final ManagedClient managedClient;
+    private final Map<String, String> clientAttributes;
+    private final Runnable release;
+    private boolean closed;
     private String idpEntityId;
     private String ssoUrl;
     private String idpCertificate;
 
-    SamlClient(String keycloakBase, String realm, String clientId, SamlAcs acs, ManagedWebDriver browser,
-            ManagedClient managedClient) {
+    SamlClient(String keycloakBase, String realm, String clientId, Map<String, String> clientAttributes, SamlAcs acs,
+            ManagedWebDriver browser, ManagedClient managedClient, Runnable release) {
         this.keycloakBase = keycloakBase;
         this.realm = realm;
         this.clientId = clientId;
+        this.clientAttributes = clientAttributes == null ? Map.of() : Map.copyOf(clientAttributes);
         this.acs = acs;
         this.browser = browser;
         this.managedClient = managedClient;
+        this.release = release;
     }
 
+    /**
+     * Starts an SP-initiated login: sends a Redirect-binding AuthnRequest and expects the response to it.
+     */
     public SamlLoginFlow startLogin() {
         ensureMetadata();
         try {
             Saml2Settings settings = settings();
             AuthnRequest request = new AuthnRequest(settings);
             String relayState = UUID.randomUUID().toString();
-            CompletableFuture<String> response = acs.register(relayState);
+            CompletableFuture<SamlAcs.Received> response = acs.register(relayState);
             String destination = ssoUrl + "?SAMLRequest=" + encode(request.getEncodedAuthnRequest())
                     + "&RelayState=" + encode(relayState);
             browser.open(destination);
@@ -57,8 +65,42 @@ public final class SamlClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Starts an IdP-initiated login at the client's IdP-initiated SSO URL
+     * ({@code /realms/{realm}/protocol/saml/clients/{name}}). Keycloak sends the RelayState configured on the client,
+     * if any. The flow accepts the next unsolicited response at the test ACS; there is no InResponseTo to match.
+     */
+    public SamlLoginFlow startIdpInitiatedLogin() {
+        return startIdpInitiatedLogin(null);
+    }
+
+    /**
+     * Starts an IdP-initiated login and asks Keycloak to send {@code relayState} instead of the client's configured
+     * IdP-initiated RelayState.
+     */
+    public SamlLoginFlow startIdpInitiatedLogin(String relayState) {
+        String destination = getIdpInitiatedSsoUrl();
+        ensureMetadata();
+        try {
+            Saml2Settings settings = settings();
+            CompletableFuture<SamlAcs.Received> response = acs.registerUnsolicited();
+            if (relayState != null) destination += "?RelayState=" + encode(relayState);
+            browser.open(destination);
+            return new SamlLoginFlow(null, null, response, settings);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to start IdP-initiated SAML login for client " + clientId, e);
+        }
+    }
+
+    public SamlLoginResult doIdpInitiatedLogin(String username, String password) {
+        return submitLogin(startIdpInitiatedLogin(), username, password);
+    }
+
     public SamlLoginResult doLogin(String username, String password) {
-        SamlLoginFlow flow = startLogin();
+        return submitLogin(startLogin(), username, password);
+    }
+
+    private SamlLoginResult submitLogin(SamlLoginFlow flow, String username, String password) {
         LoginPage loginPage = new LoginPage(browser);
         PageFactory.initElements(browser.driver(), loginPage);
         loginPage.assertCurrent();
@@ -69,6 +111,27 @@ public final class SamlClient implements AutoCloseable {
 
     public String getClientId() {
         return clientId;
+    }
+
+    /** The URL of the local assertion consumer service that receives this client's responses. */
+    public String getAcsUrl() {
+        return acs.getUrl();
+    }
+
+    /** The client's {@code saml_idp_initiated_sso_url_name}, or {@code null} when IdP-initiated SSO is not set up. */
+    public String getIdpInitiatedSsoUrlName() {
+        String value = clientAttributes.get("saml_idp_initiated_sso_url_name");
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    /** The browser URL that starts IdP-initiated SSO for this client. */
+    public String getIdpInitiatedSsoUrl() {
+        String urlName = getIdpInitiatedSsoUrlName();
+        if (urlName == null) {
+            throw new IllegalStateException("SAML client " + clientId
+                    + " has no IdP-initiated SSO URL name (saml_idp_initiated_sso_url_name)");
+        }
+        return keycloakBase + "/realms/" + encodePath(realm) + "/protocol/saml/clients/" + encodePath(urlName);
     }
 
     ManagedClient managedClient() {
@@ -134,18 +197,28 @@ public final class SamlClient implements AutoCloseable {
         return encode(value).replace("+", "%20");
     }
 
+    /**
+     * Stops the local ACS and releases the Keycloak client: a temporary client is deleted, and an existing client's
+     * redirect URIs and POST assertion consumer URL are restored. Calling it again has no effect.
+     */
     @Override
-    public void close() {
-        acs.close();
+    public synchronized void close() {
+        if (closed) return;
+        closed = true;
+        try {
+            acs.close();
+        } finally {
+            release.run();
+        }
     }
 
     public final class SamlLoginFlow implements InteractiveAuthenticationFlow {
         private final String requestId;
         private final String relayState;
-        private final CompletableFuture<String> response;
+        private final CompletableFuture<SamlAcs.Received> response;
         private final Saml2Settings settings;
 
-        private SamlLoginFlow(String requestId, String relayState, CompletableFuture<String> response,
+        private SamlLoginFlow(String requestId, String relayState, CompletableFuture<SamlAcs.Received> response,
                 Saml2Settings settings) {
             this.requestId = requestId;
             this.relayState = relayState;
@@ -163,14 +236,18 @@ public final class SamlClient implements AutoCloseable {
         }
 
         public SamlLoginResult awaitResult(long timeout, TimeUnit unit) {
-            String encodedResponse = acs.await(relayState, response, timeout, unit);
+            SamlAcs.Received received = acs.await(relayState, response, timeout, unit);
+            String encodedResponse = received.samlResponse();
             try {
                 SamlResponse samlResponse = new SamlResponse(settings, acs.getUrl(), encodedResponse);
-                if (!samlResponse.isValid(requestId)) {
+                // An IdP-initiated response answers no request, so it is validated without an InResponseTo.
+                boolean valid = requestId == null ? samlResponse.isValid() : samlResponse.isValid(requestId);
+                if (!valid) {
                     throw new IllegalStateException("Keycloak returned an invalid SAML response", samlResponse.getValidationException());
                 }
                 return new SamlLoginResult(samlResponse.getNameId(), samlResponse.getNameIdFormat(),
-                        samlResponse.getSessionIndex(), samlResponse.getId(), extractAttributes(encodedResponse));
+                        samlResponse.getSessionIndex(), samlResponse.getId(), extractAttributes(encodedResponse),
+                        received.relayState());
             } catch (IllegalStateException e) {
                 throw e;
             } catch (Exception e) {

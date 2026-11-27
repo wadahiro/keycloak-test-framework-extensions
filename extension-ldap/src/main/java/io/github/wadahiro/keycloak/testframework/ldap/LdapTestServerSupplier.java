@@ -1,6 +1,6 @@
 package io.github.wadahiro.keycloak.testframework.ldap;
 
-import java.util.List;
+import java.util.Arrays;
 import org.keycloak.testframework.injection.InstanceContext;
 import org.keycloak.testframework.injection.RequestedInstance;
 import org.keycloak.testframework.injection.Supplier;
@@ -21,7 +21,10 @@ public final class LdapTestServerSupplier implements Supplier<LdapTestServer, In
         InjectLdapTestServer x = a.getAnnotation();
         InjectLdapTestServer y = b.getAnnotation();
         return x.baseDn().equals(y.baseDn()) && x.bindDn().equals(y.bindDn())
-                && x.bindPassword().equals(y.bindPassword());
+                && x.bindPassword().equals(y.bindPassword())
+                && Arrays.equals(x.schema(), y.schema())
+                && x.memberOf() == y.memberOf()
+                && Arrays.equals(x.memberOfMembershipAttributes(), y.memberOfMembershipAttributes());
     }
 
     @Override

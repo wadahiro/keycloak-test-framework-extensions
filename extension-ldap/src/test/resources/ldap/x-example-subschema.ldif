@@ -1,0 +1,10 @@
+# Example schema as an RFC 4512 subschema entry.
+dn: cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: subschema
+attributeTypes: ( 1.3.6.1.4.1.32473.1.1.3 NAME 'x-example-costCenter'
+  DESC 'Cost center of a person' EQUALITY caseIgnoreMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+objectClasses: ( 1.3.6.1.4.1.32473.1.2.2 NAME 'x-example-account'
+  SUP top AUXILIARY MAY x-example-costCenter )

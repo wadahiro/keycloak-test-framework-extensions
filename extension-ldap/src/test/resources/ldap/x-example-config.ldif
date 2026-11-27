@@ -1,0 +1,13 @@
+# Example schema as an OpenLDAP cn=config entry, as produced by slaptest.
+dn: cn={4}x-example,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: {4}x-example
+olcObjectIdentifier: {0}xExampleRoot 1.3.6.1.4.1.32473.1
+olcAttributeTypes: {0}( xExampleRoot:1.1 NAME 'x-example-badgeNumber' DESC 'Badge
+  number of a person' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{64} SINGLE-VALUE )
+olcAttributeTypes: {1}( xExampleRoot:1.2 NAME 'x-example-project' DESC 'Projects
+  a person works on' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcObjectClasses: {0}( xExampleRoot:2.1 NAME 'x-example-person' DESC 'Example au
+ xiliary class for people' SUP top AUXILIARY MAY ( x-example-badgeNumber $ x-exa
+ mple-project ) )

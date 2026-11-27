@@ -65,6 +65,10 @@ See the [runtime plugin guide](../../../docs/runtime-plugin.md), [snapshot guide
 
 For LDAP federation tests, add `keycloak-test-framework-ldap` with test scope.
 It starts an UnboundID in-memory LDAP server and restores its directory snapshot alongside the database baseline.
+`@InjectLdapTestServer(schema = "ldap/x-example.schema")` merges custom attribute types and object classes from classpath (or `file:`) schema files into the standard schema; `.ldif` files hold subschema or OpenLDAP `cn=config` entries, `.schema` files use OpenLDAP `slapd.conf` syntax.
+`memberOf = true` maintains a read-only operational `memberOf` on member entries from groups' `member` values (`memberOfMembershipAttributes` selects others, such as `uniqueMember`), for `group-ldap-mapper` with `GET_GROUPS_FROM_USER_MEMBEROF_ATTRIBUTE` and `(memberOf=...)` filters.
+Writes through `ldap.directory()` bypass the emulation until the next LDAP client read, snapshot capture, or `ldap.synchronizeMemberOf()`.
+Both options are off by default.
 See the [LDAP testing guide](../../../docs/ldap-testing.md).
 
 ## SAML client login

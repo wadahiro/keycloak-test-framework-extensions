@@ -76,6 +76,7 @@ For LDAP User Federation and LDAP mapper tests, add the in-memory directory help
 ```
 
 The LDAP helper uses UnboundID's in-memory LDAP server and restores its directory snapshot together with the database baseline.
+It can load custom schema files and emulate `memberOf`.
 See [LDAP federation testing](ldap-testing.md) for setup and scope.
 
 The extensions BOM also manages Keycloak Test Framework modules. For OIDC browser-flow tests, add its OAuth module:

@@ -30,7 +30,7 @@ Do not describe this as same-JVM embedded execution.
 3. Read [references/snapshot.md](references/snapshot.md) for automatic snapshot reset.
 4. Read [references/ide-testing.md](references/ide-testing.md) when configuring IntelliJ IDEA or Eclipse JUnit launches.
 5. Read [the broker testing guide](../../docs/broker-testing-design.md) when testing external OIDC/SAML identity providers, broker mappers, first/post broker flows, or federated identity links.
-6. Read [LDAP federation testing](../../docs/ldap-testing.md) when testing LDAP User Federation or LDAP storage mappers.
+6. Read [LDAP federation testing](../../docs/ldap-testing.md) when testing LDAP User Federation or LDAP storage mappers, including custom directory schema and `memberOf`-based group mapping.
 7. Read [browser login examples](../../docs/client-login-examples.md) when testing OIDC or SAML clients, including SAML clients imported with realm JSON and IdP-initiated SAML login.
 
 Use separate Maven modules for Keycloak SPI development and Framework-based integration tests.

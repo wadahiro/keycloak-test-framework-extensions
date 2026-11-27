@@ -1,0 +1,16 @@
+# Example custom schema in OpenLDAP slapd.conf syntax.
+# 1.3.6.1.4.1.32473 is the example enterprise number reserved for documentation (RFC 5612).
+objectidentifier xExampleRoot 1.3.6.1.4.1.32473.1
+
+attributetype ( xExampleRoot:1.1
+    NAME 'x-example-badgeNumber'
+    DESC 'Badge number of a person'
+    EQUALITY caseIgnoreMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{64}
+    SINGLE-VALUE )
+
+objectclass ( xExampleRoot:2.1
+    NAME 'x-example-person'
+    DESC 'Example auxiliary class for people'
+    SUP top AUXILIARY
+    MAY x-example-badgeNumber )

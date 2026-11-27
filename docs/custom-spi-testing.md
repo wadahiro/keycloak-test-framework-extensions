@@ -45,5 +45,23 @@ The extension resolves the artifact and makes it available to the selected serve
 Quarkus places it in the isolated server's `providers` directory before its bootstrap build; Undertow 15 adds the artifact to the child JVM classpath.
 Provider JAR dependencies should follow Keycloak's provider packaging guidance; the extension does not shade or rewrite provider artifacts.
 
+## Provider configuration
+
+Pass provider settings with the Framework's `spiOption(spi, provider, key, value)`:
+
+```java
+@Override
+public KeycloakServerConfigBuilder configure(KeycloakServerConfigBuilder config) {
+    return config.dependency("com.example", "my-keycloak-provider")
+            .spiOption("realm-restapi-extension", "my-provider", "endpoint", "http://localhost:8089");
+}
+```
+
+The provider factory reads the value from the `Config.Scope` given to `init`.
+Quarkus receives it as the `spi-<spi>--<provider>--<key>` server option.
+Undertow 15 writes it into the isolated server's JSON configuration under `<spi>.<provider>.<key>`, the place a `standalone.xml` `<spi>` element configures on a WildFly server; the names are used as written.
+Values are passed as text, which `Config.Scope` parses for `getInt`, `getLong` and `getBoolean`.
+Other server options and feature flags are rejected on Undertow 15.
+
 The per-run Keycloak home is disposable, so provider changes are picked up by starting a new test server.
 The extension does not hot-deploy provider changes into an already-running GLOBAL server.

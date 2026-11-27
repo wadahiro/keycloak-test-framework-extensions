@@ -128,6 +128,18 @@ public class EmbeddedRuntime {
                 jpa.put("user", "sa");
                 jpa.put("password", "");
                 json.putObject("timer").put("provider", "snapshot-barrier");
+                String spiOptions = System.getProperty("kctf.spi.options");
+                if (spiOptions != null) {
+                    // <spi>.<provider>.<key>=<value>; Keycloak's Config.Scope parses numbers and booleans from text
+                    Properties options = new Properties();
+                    try (var in = java.nio.file.Files.newBufferedReader(java.nio.file.Path.of(spiOptions), java.nio.charset.StandardCharsets.UTF_8)) {
+                        options.load(in);
+                    }
+                    for (String name : options.stringPropertyNames()) {
+                        String[] parts = name.split("\\.", 3);
+                        json.with(parts[0]).with(parts[1]).put(parts[2], options.getProperty(name));
+                    }
+                }
                 Config.init(new JsonConfigProvider(json, new Properties()));
             } catch (Exception e) {
                 throw new IllegalStateException("Cannot configure isolated Keycloak", e);

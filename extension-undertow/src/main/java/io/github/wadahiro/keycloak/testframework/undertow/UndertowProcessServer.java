@@ -53,6 +53,14 @@ public final class UndertowProcessServer implements KeycloakServer {
             commandLine.add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED");
             String providers = providerClasspath(builder);
             String classpath = providers.isEmpty() ? runtime.classpath() : runtime.classpath() + File.pathSeparator + providers;
+            Map<String, String> spiOptions = spiOptions(builder);
+            if (!spiOptions.isEmpty()) {
+                Path spiConfig = run.resolve("spi-options.properties");
+                Properties properties = new Properties();
+                properties.putAll(spiOptions);
+                try (Writer out = Files.newBufferedWriter(spiConfig, StandardCharsets.UTF_8)) { properties.store(out, null); }
+                commandLine.add("-Dkctf.spi.options=" + spiConfig);
+            }
             commandLine.addAll(List.of("-cp", classpath, runtime.mainClass(), run.toString()));
             ProcessBuilder command = new ProcessBuilder(commandLine);
             command.environment().put("KCTF_RUNTIME_JAVA", Integer.toString(runtime.javaFeature()));
@@ -83,15 +91,14 @@ public final class UndertowProcessServer implements KeycloakServer {
     @SuppressWarnings("unchecked")
     private static String providerClasspath(KeycloakServerConfigBuilder builder) throws Exception {
         if (builder == null) return "";
-        for (String fieldName : List.of("options", "features", "featuresDisabled")) {
+        for (String fieldName : List.of("features", "featuresDisabled")) {
             var field = KeycloakServerConfigBuilder.class.getDeclaredField(fieldName);
             field.setAccessible(true);
-            Object value = field.get(builder);
-            boolean configured = value instanceof Map<?, ?> map ? !map.isEmpty() : !((java.util.Collection<?>) value).isEmpty();
-            if (configured) {
-                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies only; unsupported setting: " + fieldName);
+            if (!((java.util.Collection<?>) field.get(builder)).isEmpty()) {
+                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies and SPI options only; unsupported setting: " + fieldName);
             }
         }
+        spiOptions(builder);
         var method = KeycloakServerConfigBuilder.class.getDeclaredMethod("toDependencies");
         method.setAccessible(true);
         var dependencies = (Iterable<Object>) method.invoke(builder);
@@ -112,6 +119,28 @@ public final class UndertowProcessServer implements KeycloakServer {
         }
         return String.join(File.pathSeparator, paths);
     }
+
+    /**
+     * The builder's {@code spiOption(spi, provider, key, value)} settings ({@code spi-<spi>--<provider>--<key>}), which
+     * Keycloak 15 reads from its JSON configuration as {@code <spi>.<provider>.<key>}; any other option is rejected.
+     */
+    @SuppressWarnings("unchecked")
+    static Map<String, String> spiOptions(KeycloakServerConfigBuilder builder) throws Exception {
+        if (builder == null) return Map.of();
+        var field = KeycloakServerConfigBuilder.class.getDeclaredField("options");
+        field.setAccessible(true);
+        Map<String, String> spi = new LinkedHashMap<>();
+        for (var option : ((Map<String, String>) field.get(builder)).entrySet()) {
+            var name = SPI_OPTION.matcher(option.getKey());
+            if (!name.matches()) {
+                throw new IllegalArgumentException("Undertow 15 supports SPI options (spiOption) only; unsupported option: " + option.getKey());
+            }
+            spi.put(name.group(1) + "." + name.group(2) + "." + name.group(3), option.getValue());
+        }
+        return spi;
+    }
+
+    private static final java.util.regex.Pattern SPI_OPTION = java.util.regex.Pattern.compile("spi-([^.]+?)--([^.]+?)--([^.]+)");
 
     private void readOutput() {
         try (BufferedReader lines = process.inputReader(StandardCharsets.UTF_8);

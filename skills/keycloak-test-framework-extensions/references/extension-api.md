@@ -57,7 +57,7 @@ The Quarkus adapter places registered provider JARs in its isolated server home 
 The Undertow 15 adapter resolves provider JARs into the child JVM classpath.
 Provider changes require a fresh server process.
 
-The Undertow 15 adapter consumes provider dependencies from `KeycloakServerConfigBuilder` and rejects configured server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.
+The Undertow 15 adapter consumes provider dependencies and `spiOption(spi, provider, key, value)` from `KeycloakServerConfigBuilder`; it writes each SPI option into the Keycloak 15 JSON configuration as `<spi>.<provider>.<key>` and rejects other server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.
 Run its integration tests with `mvn -Pundertow15 verify`, the Test Framework on JDK 25, and `KEYCLOAK_JAVA_HOME` set to JDK 11.
 
 The runtime Maven plugin generates `target/test-classes/META-INF/keycloak-test-runtime.properties`; bind `prepare` to `process-test-classes` or run it before direct IDE JUnit launches.

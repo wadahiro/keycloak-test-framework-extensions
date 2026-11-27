@@ -7,13 +7,16 @@ import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resource.RealmResourceProviderFactory;
 
 public final class CustomRealmResourceProviderFactory implements RealmResourceProviderFactory {
+    private String greeting;
+
     @Override
     public RealmResourceProvider create(KeycloakSession session) {
-        return new CustomRealmResourceProvider();
+        return new CustomRealmResourceProvider(greeting);
     }
 
     @Override
     public void init(Config.Scope config) {
+        greeting = config.get("greeting", "unset");
     }
 
     @Override

@@ -26,10 +26,20 @@ class CustomSpiIT {
         assertEquals("custom-undertow-spi-loaded", response.body());
     }
 
+    @Test
+    void passesSpiOptionsToTheProviderFactory() throws Exception {
+        var request = HttpRequest.newBuilder(URI.create(realm.getBaseUrl() + "/custom-test-spi/config")).GET().build();
+        var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(200, response.statusCode(), response.body());
+        assertEquals("configured-by-spi-option", response.body());
+    }
+
     public static class ProviderServerConfig implements KeycloakServerConfig {
         @Override
         public KeycloakServerConfigBuilder configure(KeycloakServerConfigBuilder builder) {
-            return builder.dependency("io.github.wadahiro.keycloak.testframework", "undertow-spi-fixture");
+            return builder.dependency("io.github.wadahiro.keycloak.testframework", "undertow-spi-fixture")
+                    .spiOption("realm-restapi-extension", "custom-test-spi", "greeting", "configured-by-spi-option");
         }
     }
 }

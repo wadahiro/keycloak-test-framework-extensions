@@ -7,6 +7,12 @@ import javax.ws.rs.core.MediaType;
 import org.keycloak.services.resource.RealmResourceProvider;
 
 public final class CustomRealmResourceProvider implements RealmResourceProvider {
+    private final String greeting;
+
+    CustomRealmResourceProvider(String greeting) {
+        this.greeting = greeting;
+    }
+
     @Override
     public Object getResource() {
         return this;
@@ -21,5 +27,12 @@ public final class CustomRealmResourceProvider implements RealmResourceProvider 
     @Produces(MediaType.TEXT_PLAIN)
     public String status() {
         return "custom-undertow-spi-loaded";
+    }
+
+    @GET
+    @Path("config")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String config() {
+        return greeting;
     }
 }

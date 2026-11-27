@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+        <artifactId>keycloak-test-framework-extensions-parent</artifactId>
+        <version>0.5.1</version>
+    </parent>
+    <artifactId>keycloak-test-framework-proxy</artifactId>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.keycloak.testframework</groupId>
+                <artifactId>keycloak-test-framework-bom</artifactId>
+                <version>${framework.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.keycloak.testframework</groupId>
+            <artifactId>keycloak-test-framework-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <!-- FrontProxyBrowser only: tests that drive a browser already depend on the Framework UI module. -->
+            <groupId>org.keycloak.testframework</groupId>
+            <artifactId>keycloak-test-framework-ui</artifactId>
+            <scope>compile</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.86</version>
+        </dependency>
+    </dependencies>
+</project>

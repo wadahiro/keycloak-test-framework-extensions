@@ -1,3 +1,9 @@
+## [0.5.2](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.5.1...v0.5.2) (2026-11-27)
+
+### Bug Fixes
+
+* **undertow:** let provider dependencies override built-in providers ([ea5e5fa](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/ea5e5fa96fde677274c2884b703c85224a51d66d))
+
 ## [0.5.1](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.5.0...v0.5.1) (2026-11-27)
 
 ### Bug Fixes

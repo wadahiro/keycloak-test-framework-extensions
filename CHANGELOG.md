@@ -1,3 +1,13 @@
+## [0.5.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.4.0...v0.5.0) (2026-11-27)
+
+### Features
+
+* **ldap:** load custom schema and emulate memberOf ([ed73437](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/ed734371c131a5710cb1179cbcd7c40b2ebbdcbd))
+* **proxy:** add a front proxy for reverse-proxy headers and client addresses ([307af4f](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/307af4f99e214c6cdcc6ee85fb95c4dc92e44647))
+* **proxy:** terminate HTTPS and mutual TLS in the front proxy ([42abf35](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/42abf35c55a7fbacdebd45a78a6ca9d97f00daf9))
+* **saml:** log in through existing realm clients and IdP-initiated SSO ([fffac8e](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/fffac8e66a2da1dbf2364b02b26a4544f9fd7183))
+* **undertow:** pass spiOption settings to Keycloak 15 providers ([4419a36](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/4419a36dc88e2170c4f69664d152bcd12c453a56))
+
 ## [0.4.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.3.0...v0.4.0) (2026-11-24)
 
 ### Features

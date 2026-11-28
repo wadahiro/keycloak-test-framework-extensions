@@ -53,6 +53,11 @@ The Undertow 15 adapter deploys the compiled classes directory in its isolated s
 For a separately built SPI artifact, declare it in the server configuration with `config.dependency("groupId", "artifactId")` and make sure that artifact is resolvable from the Maven repository.
 Keep SPI development and Framework integration tests in separate Maven modules when they target different Keycloak API versions.
 
+To deploy archives from disk instead of resolved Maven artifacts, for example a provider JAR built by another module or a Keycloak 15 EAR, use `ProviderFiles.add(config, "../example-ear/target/example-ear-*.ear")` from `io.github.wadahiro.keycloak.testframework.providers`.
+It accepts JAR files and exploded directories on both adapters, and EAR archives on Undertow 15 only (Quarkus rejects them; pass the JARs instead).
+The last path segment may be a glob that must match exactly one file; missing files, globs matching none or several, and unsupported types fail clearly.
+Provider files deploy after every `dependency(...)` artifact, in the order added; the Framework keeps `dependency(...)` artifacts in an unordered set.
+
 The Quarkus adapter places registered provider JARs in its isolated server home before bootstrap.
 The Undertow 15 adapter keeps provider JARs off the child JVM classpath and deploys them before Keycloak boots, as WildFly deploys a provider JAR present at startup.
 Classes are found parent first (Keycloak before the provider), while Keycloak registrations (`META-INF/services/org.keycloak.*`), `META-INF/keycloak-themes.json`, `theme/` and `theme-resources/` are read from the provider only.
@@ -60,7 +65,7 @@ A provider factory with the same SPI and provider id as a built-in one replaces 
 Themes, theme resources and SPI definitions (`org.keycloak.provider.Spi`) in provider JARs are deployed with them; see `docs/custom-spi-testing.md`.
 Provider changes require a fresh server process.
 
-The Undertow 15 adapter consumes provider dependencies and `spiOption(spi, provider, key, value)` from `KeycloakServerConfigBuilder`; it writes each SPI option into the Keycloak 15 JSON configuration as `<spi>.<provider>.<key>` and rejects other server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.
+The Undertow 15 adapter consumes provider dependencies, provider files and `spiOption(spi, provider, key, value)` from `KeycloakServerConfigBuilder`; it writes each SPI option into the Keycloak 15 JSON configuration as `<spi>.<provider>.<key>` and rejects other server options or feature flags, which its fixed Keycloak 15 bootstrap cannot apply.
 The one exception is `proxy-headers=xforwarded`, which enables Undertow's proxy address forwarding (see below).
 Run its integration tests with `mvn -Pundertow15 verify`, the Test Framework on JDK 25, and `KEYCLOAK_JAVA_HOME` set to JDK 11.
 

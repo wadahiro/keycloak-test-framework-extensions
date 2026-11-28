@@ -196,6 +196,18 @@ public class QuarkusServer {
             addDirectoryAsJar(Path.of(classes), localProvider);
             installedProviders.add(localProvider);
         }
+        // Provider files from disk, as a distribution takes JARs in its providers directory; directories are packaged.
+        String providerFiles = System.getenv().getOrDefault("KCTF_PROVIDER_FILES", "");
+        int providerFileIndex = 0;
+        for (String file : providerFiles.split(java.util.regex.Pattern.quote(java.io.File.pathSeparator))) {
+            if (file.isBlank()) continue;
+            Path source = Path.of(file);
+            String name = source.getFileName().toString();
+            Path target = providers.resolve("provider-file-" + providerFileIndex++ + "-" + (name.endsWith(".jar") ? name : name + ".jar"));
+            if (Files.isDirectory(source)) addDirectoryAsJar(source, target);
+            else Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            installedProviders.add(target);
+        }
         return installedProviders;
     }
 

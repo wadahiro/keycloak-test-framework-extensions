@@ -34,5 +34,10 @@
             <artifactId>keycloak-test-framework-snapshot</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+            <artifactId>keycloak-test-framework-provider-files</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

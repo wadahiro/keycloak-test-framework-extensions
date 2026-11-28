@@ -8,6 +8,8 @@ import java.nio.file.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import io.github.wadahiro.keycloak.testframework.providers.ProviderFiles;
+import io.github.wadahiro.keycloak.testframework.providers.ProviderFiles.ProviderFile;
 import org.keycloak.testframework.config.Config;
 import org.keycloak.testframework.server.*;
 
@@ -51,12 +53,9 @@ public final class UndertowProcessServer implements KeycloakServer {
             }
             commandLine.add("--add-opens=java.base/java.util=ALL-UNNAMED");
             commandLine.add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED");
-            List<String> providers = providerPaths(builder);
+            List<String> providers = providerDeployments(builder, run);
             if (!providers.isEmpty()) {
                 // Kept off -cp: the child deploys them like a WildFly deployment so they can replace built-in providers.
-                for (String entry : providers) {
-                    if (!Files.exists(Path.of(entry))) throw new IllegalStateException("Provider dependency is missing: " + entry);
-                }
                 Path providerList = run.resolve("provider-dependencies.txt");
                 Files.write(providerList, providers, StandardCharsets.UTF_8);
                 commandLine.add("-Dkctf.provider.dependencies=" + providerList);
@@ -97,6 +96,32 @@ public final class UndertowProcessServer implements KeycloakServer {
         }
     }
 
+    /**
+     * One line per deployment for the child, in deployment order: the deployment name and its root paths, separated by
+     * tabs. {@code dependency(...)} artifacts come first, then {@link ProviderFiles} in the order they were added; an EAR
+     * is expanded under the run directory and becomes one deployment of its module and library JARs.
+     */
+    static List<String> providerDeployments(KeycloakServerConfigBuilder builder, Path run) throws Exception {
+        List<String> lines = new ArrayList<>();
+        for (String path : providerPaths(builder)) {
+            if (!Files.exists(Path.of(path))) throw new IllegalStateException("Provider dependency is missing: " + path);
+            lines.add(Path.of(path).getFileName() + "\t" + path);
+        }
+        int index = 0;
+        for (ProviderFile file : ProviderFiles.of(builder)) {
+            String name = file.path().getFileName().toString();
+            if (file.kind() == ProviderFiles.Kind.EAR) {
+                List<Path> members = EarArchive.members(file.path(), run.resolve("provider-files").resolve(index++ + "-" + name));
+                StringBuilder line = new StringBuilder(name);
+                for (Path member : members) line.append('\t').append(member);
+                lines.add(line.toString());
+            } else {
+                lines.add(name + "\t" + file.path());
+            }
+        }
+        return lines;
+    }
+
     @SuppressWarnings("unchecked")
     private static List<String> providerPaths(KeycloakServerConfigBuilder builder) throws Exception {
         if (builder == null) return List.of();
@@ -104,7 +129,7 @@ public final class UndertowProcessServer implements KeycloakServer {
             var field = KeycloakServerConfigBuilder.class.getDeclaredField(fieldName);
             field.setAccessible(true);
             if (!((java.util.Collection<?>) field.get(builder)).isEmpty()) {
-                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies, SPI options and proxy-headers only; unsupported setting: " + fieldName);
+                throw new IllegalArgumentException("Undertow 15 supports KeycloakServerConfigBuilder provider dependencies, provider files, SPI options and proxy-headers only; unsupported setting: " + fieldName);
             }
         }
         spiOptions(builder);
@@ -141,7 +166,7 @@ public final class UndertowProcessServer implements KeycloakServer {
         field.setAccessible(true);
         Map<String, String> spi = new LinkedHashMap<>();
         for (var option : ((Map<String, String>) field.get(builder)).entrySet()) {
-            if (option.getKey().equals(PROXY_HEADERS)) continue;
+            if (option.getKey().equals(PROXY_HEADERS) || ProviderFiles.isOption(option.getKey())) continue;
             var name = SPI_OPTION.matcher(option.getKey());
             if (!name.matches()) {
                 throw new IllegalArgumentException("Undertow 15 supports SPI options (spiOption) and proxy-headers only; unsupported option: " + option.getKey());

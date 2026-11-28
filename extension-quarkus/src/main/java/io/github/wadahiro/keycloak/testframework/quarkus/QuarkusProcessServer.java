@@ -29,6 +29,7 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.Response;
 
+import io.github.wadahiro.keycloak.testframework.providers.ProviderFiles;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -92,6 +93,7 @@ public final class QuarkusProcessServer implements KeycloakServer {
             builderProcess.environment().put("KCTF_HTTPS_TEST_PORT", Integer.toString(httpsPort));
             builderProcess.environment().put("KCTF_PROVIDER_DEPENDENCIES", String.join(";", providers.coordinates()));
             builderProcess.environment().put("KCTF_LOCAL_PROVIDER_CLASSES", String.join(";", providers.localProviderClasses()));
+            builderProcess.environment().put("KCTF_PROVIDER_FILES", String.join(File.pathSeparator, providers.files()));
             builderProcess.environment().put("KCTF_SCHEME", tlsEnabled ? "https" : "http");
             builderProcess.environment().put("KCTF_KEYCLOAK_VERSION", keycloakVersion);
             builderProcess.environment().put("KCTF_HOME_DIR", runDirectory.resolve("home").toString());
@@ -115,10 +117,12 @@ public final class QuarkusProcessServer implements KeycloakServer {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<String> keycloakArgs(KeycloakServerConfigBuilder builder, String keycloakVersion) throws Exception {
+    static List<String> keycloakArgs(KeycloakServerConfigBuilder builder, String keycloakVersion) throws Exception {
         var method = KeycloakServerConfigBuilder.class.getDeclaredMethod("toArgs");
         method.setAccessible(true);
-        List<String> args = (List<String>) method.invoke(builder);
+        // Provider files travel as reserved options; they are installed into providers/, not passed to Keycloak.
+        List<String> args = ((List<String>) method.invoke(builder)).stream()
+                .filter(arg -> !arg.startsWith("--" + ProviderFiles.OPTION_PREFIX)).toList();
         int major = Integer.parseInt(keycloakVersion.split("[.]", 2)[0]);
         if (major >= 26) return args;
         return args.stream().filter(arg -> !arg.startsWith("--bootstrap-admin-client-id=")
@@ -156,7 +160,7 @@ public final class QuarkusProcessServer implements KeycloakServer {
     }
 
     @SuppressWarnings("unchecked")
-    private static ProviderSetup providerSetup(KeycloakServerConfigBuilder builder) throws Exception {
+    static ProviderSetup providerSetup(KeycloakServerConfigBuilder builder) throws Exception {
         var dependenciesMethod = KeycloakServerConfigBuilder.class.getDeclaredMethod("toDependencies");
         dependenciesMethod.setAccessible(true);
         var dependencies = (Iterable<Object>) dependenciesMethod.invoke(builder);
@@ -188,10 +192,18 @@ public final class QuarkusProcessServer implements KeycloakServer {
                 }
             }
         }
-        return new ProviderSetup(coordinates, localProviderClasses);
+        List<String> files = new java.util.ArrayList<>();
+        for (ProviderFiles.ProviderFile file : ProviderFiles.of(builder)) {
+            if (file.kind() == ProviderFiles.Kind.EAR) {
+                throw new IllegalArgumentException("EAR provider archives are supported only by the Keycloak 15 (WildFly-based) runtime;"
+                        + " pass the JAR files instead: " + file.path());
+            }
+            files.add(file.path().toString());
+        }
+        return new ProviderSetup(coordinates, localProviderClasses, files);
     }
 
-    private record ProviderSetup(List<String> coordinates, List<String> localProviderClasses) { }
+    record ProviderSetup(List<String> coordinates, List<String> localProviderClasses, List<String> files) { }
 
     private void readOutput(CompletableFuture<Void> ready, int port) {
         Path log = runDirectory.resolve("server.log");

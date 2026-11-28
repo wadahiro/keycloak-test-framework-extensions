@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+        <artifactId>keycloak-test-framework-extensions-parent</artifactId>
+        <version>0.5.3-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+    <artifactId>undertow-ear-fixture</artifactId>
+    <packaging>ear</packaging>
+    <description>EAR packaging of a provider module and its library, as a Keycloak 15 deployment on WildFly ships them.</description>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+            <artifactId>undertow-ear-fixture-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <version>8</version>
+                    <defaultLibBundleDir>lib</defaultLibBundleDir>
+                    <outputFileNameMapping>@{artifactId}@-@{version}@.@{extension}@</outputFileNameMapping>
+                    <modules>
+                        <jarModule>
+                            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+                            <artifactId>undertow-ear-fixture-provider</artifactId>
+                            <bundleDir>/</bundleDir>
+                            <includeInApplicationXml>true</includeInApplicationXml>
+                        </jarModule>
+                    </modules>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

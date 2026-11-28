@@ -7,5 +7,6 @@
   <dependencies><dependency><groupId>org.keycloak.testframework</groupId><artifactId>keycloak-test-framework-core</artifactId><scope>compile</scope></dependency>
     <dependency><groupId>org.keycloak</groupId><artifactId>keycloak-admin-client</artifactId><scope>provided</scope></dependency>
     <dependency><groupId>org.keycloak</groupId><artifactId>keycloak-core</artifactId><scope>provided</scope></dependency>
-    <dependency><groupId>jakarta.ws.rs</groupId><artifactId>jakarta.ws.rs-api</artifactId><scope>provided</scope></dependency><dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-snapshot</artifactId><version>${project.version}</version></dependency></dependencies>
+    <dependency><groupId>jakarta.ws.rs</groupId><artifactId>jakarta.ws.rs-api</artifactId><scope>provided</scope></dependency><dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-snapshot</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>io.github.wadahiro.keycloak.testframework</groupId><artifactId>keycloak-test-framework-provider-files</artifactId><version>${project.version}</version></dependency></dependencies>
 </project>

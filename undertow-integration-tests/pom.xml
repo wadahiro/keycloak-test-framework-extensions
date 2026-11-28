@@ -34,6 +34,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- Built before this module; ProviderFileEarIT deploys the archive from its target directory. -->
+            <groupId>io.github.wadahiro.keycloak.testframework</groupId>
+            <artifactId>undertow-ear-fixture</artifactId>
+            <version>${project.version}</version>
+            <type>ear</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.github.wadahiro.keycloak.testframework</groupId>
             <artifactId>keycloak-test-framework-saml</artifactId>
             <version>${project.version}</version>
@@ -91,6 +99,9 @@
                 <configuration>
                     <jvm>${java.home}/bin/java</jvm>
                     <runOrder>alphabetical</runOrder>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>io.github.wadahiro.keycloak.testframework:undertow-ear-fixture</classpathDependencyExclude>
+                    </classpathDependencyExcludes>
                     <argLine>-Djava.util.logging.manager=org.jboss.logmanager.LogManager</argLine>
                     <systemPropertyVariables>
                         <kc.test.server.extension.undertow.java.home>${keycloak.java.home}</kc.test.server.extension.undertow.java.home>
@@ -98,6 +109,7 @@
                         <expected.server.version>${tested.keycloak.version}</expected.server.version>
                         <expected.server.java>${tested.server.java}</expected.server.java>
                         <unit.java.home>${unit.java.home}</unit.java.home>
+                        <fixture.version>${project.version}</fixture.version>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

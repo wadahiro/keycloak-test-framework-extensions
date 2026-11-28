@@ -1,3 +1,9 @@
+## [0.6.0](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.5.2...v0.6.0) (2026-11-28)
+
+### Features
+
+* **providers:** deploy provider JARs, directories and EARs from disk ([df36319](https://github.com/wadahiro/keycloak-test-framework-extensions/commit/df3631934331e204ea13b71aee583175075e8444))
+
 ## [0.5.2](https://github.com/wadahiro/keycloak-test-framework-extensions/compare/v0.5.1...v0.5.2) (2026-11-27)
 
 ### Bug Fixes

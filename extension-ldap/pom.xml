@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.wadahiro.keycloak.testframework</groupId>
         <artifactId>keycloak-test-framework-extensions-parent</artifactId>
-        <version>0.5.3-SNAPSHOT</version>
+        <version>0.6.0</version>
     </parent>
     <artifactId>keycloak-test-framework-ldap</artifactId>
     <dependencyManagement>

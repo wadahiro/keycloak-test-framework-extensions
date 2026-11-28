@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.wadahiro.keycloak.testframework</groupId>
         <artifactId>keycloak-test-framework-extensions-parent</artifactId>
-        <version>0.6.0</version>
+        <version>0.6.1-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>jdk11-unit-test-example</artifactId>
